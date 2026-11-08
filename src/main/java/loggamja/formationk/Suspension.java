@@ -25,14 +25,12 @@ public class Suspension implements ClientModInitializer {
     private static final double FREQ  = 1.66; // 공진주파수 (Hz)
     private static final double Q     = 1;    // 공진 팩터
 
-    private static final int SWING_ANIMATION_TICKS = 6;
     private static final int DRIFT_START_TICKS = 10;
 
     private static final class SuspensionState {
         final List<Float> steerGradientBuffer = new ArrayList<>();
         float prevPlayerYaw = 0f;
         boolean isDrifting = false;
-        int swingAnimationTicks = 0;
         int driftJustStartedTicks = 0;
         final SpringSimulator.SpringState spring = new SpringSimulator.SpringState();
         long lastSeenTick = 0L;
@@ -115,17 +113,8 @@ public class Suspension implements ClientModInitializer {
         if (st.steerGradientBuffer.size() > 5) st.steerGradientBuffer.removeFirst();
         st.prevPlayerYaw = playerYaw;
 
-        boolean wasPlayingSwingAnimation = st.swingAnimationTicks > 0;
-        if (st.swingAnimationTicks > 0) st.swingAnimationTicks--;
         if (st.driftJustStartedTicks > 0) st.driftJustStartedTicks--;
 
-        double steerGradientSum = 0.0;
-        for (int i = 0; i < st.steerGradientBuffer.size(); i++) {
-            steerGradientSum += st.steerGradientBuffer.get(i);
-        }
-        double filteredSteerGradient = steerGradientSum / st.steerGradientBuffer.size();
-
-        boolean disableSwingAnimation = isBike == 1 && Config.INSTANCE.bikeSuspension >= 2;
         boolean isDriftingTemp = detectDriftState(kart);
         if (isDriftingTemp != st.isDrifting) {
             st.isDrifting = isDriftingTemp;
@@ -133,14 +122,7 @@ public class Suspension implements ClientModInitializer {
             if (st.isDrifting) {
                 st.driftJustStartedTicks = DRIFT_START_TICKS;
             }
-            else {
-                if (filteredSteerGradient > 2 && !wasPlayingSwingAnimation && !disableSwingAnimation) {
-                    st.swingAnimationTicks = SWING_ANIMATION_TICKS;
-                }
-            }
         }
-
-        boolean isPlayingSwingAnimation = st.swingAnimationTicks > 0;
 
         float moveDirection = 0f;
         float steerDirection = 0f;
@@ -167,7 +149,7 @@ public class Suspension implements ClientModInitializer {
             }
         }
 
-        if (isPlayingSwingAnimation || !isModelRotateAllowed) clampedDriftAngle = 0;
+        if (!isModelRotateAllowed) clampedDriftAngle = 0;
 
         SpringSimulator.step(st.spring, DT, FREQ, Q, -(clampedDriftAngle / 2f));
         double modelRollValue = Math.toDegrees(st.spring.x);
