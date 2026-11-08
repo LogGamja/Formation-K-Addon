@@ -59,7 +59,7 @@ public class Minimap implements ClientModInitializer {
     private static void onTickStart() {
         if (Config.INSTANCE.useMinimap == 0) return;
 
-        if (!Main.isRidingKart) return;
+        if (!Main.isCameraPlayerRidingKart) return;
         if (!Main.isPlayingInGame()) return;
 
         if (client.level != lastWorld.get()) {
@@ -82,7 +82,7 @@ public class Minimap implements ClientModInitializer {
         }
 
         final int playerMargin = 5;
-        BlockPos start = Main.getRidingPlayer().blockPosition().above();
+        BlockPos start = Main.getCameraPlayer().blockPosition().above();
 
         int searchRange = (int) ((MinimapRenderer.MAX_DIST + playerMargin * 2) * 2);
         FrontierSearch.floodFillWithVertical(start, searchRange, FrontierSearch.STAGING_BUDGET_PER_TICK);

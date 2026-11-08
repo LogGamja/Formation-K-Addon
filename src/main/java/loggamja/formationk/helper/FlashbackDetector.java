@@ -5,22 +5,22 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 /**
- * Flashback(1.21.5용) 호환 레이어 By Claude Opus 5
+ * Flashback 호환 레이어 By Claude Opus 5
  *
  * Flashback을 컴파일 의존성으로 추가하지 않기 위해 리플렉션으로만 접근한다.
  * Flashback이 없거나 내부 구조가 바뀌면 static 초기화에서 조용히 실패하고,
  * 모든 메서드가 false를 반환하므로 formationk는 평소와 완전히 동일하게 동작한다.
  *
- * 참조 구조 (Flashback 0.39.5 for 1.21.5에서 직접 확인):
- *   com.moulberry.flashback.Flashback#isInReplay()                -> boolean (Flashback이 getFov를 가로채는 조건과 동일)
+ * 참조 구조 (Flashback 0.43.6 for 26.3에서 직접 확인):
+ *   com.moulberry.flashback.Flashback#isInReplay()                -> boolean (Flashback이 calculateFov를 가로채는 조건과 동일)
  *   com.moulberry.flashback.state.EditorStateManager#getCurrent() -> EditorState (리플레이 중이어도 null일 수 있음)
  *   com.moulberry.flashback.state.EditorState#replayVisuals       -> ReplayVisuals (public field)
  *   com.moulberry.flashback.visuals.ReplayVisuals#overrideFov     -> boolean (public field)
  *
  * 두 판정의 가용 여부를 따로 두는 이유: EditorState 쪽 구조만 바뀌어도 리플레이 판정까지 꺼지면
- * formationk가 일반 플레이 경로로 빠져 유저의 FOV 옵션을 되돌리지 못한 채 남기게 된다.
+ * 리플레이 FOV 보정(CameraFovMixin)도 함께 꺼진다.
  *
- * 시그니처까지 초기화 때 검증하는 이유: 여기는 프레임마다 도는 getFov 경로라, 구조가 바뀌면
+ * 시그니처까지 초기화 때 검증하는 이유: 여기는 프레임마다 도는 calculateFov 호출부라, 구조가 바뀌면
  * 매 프레임 예외를 던지고 삼키며 조용히 렌더 스레드를 갉아먹는다.
  */
 public final class FlashbackDetector {

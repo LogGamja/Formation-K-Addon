@@ -427,7 +427,7 @@ final class MinimapRenderer {
 
     static void renderMinimap(GuiGraphicsExtractor context, float tickDelta) {
         if (Config.INSTANCE.useMinimap == 0) return;
-        if (!Main.isRidingKart) return;
+        if (!Main.isCameraPlayerRidingKart) return;
         if (FrontierSearch.visitedColumns.isEmpty() || !front.originSet) return;
         if (!Main.isPlayingInGame()) return;
 
@@ -468,7 +468,7 @@ final class MinimapRenderer {
         context.fill(viewX1, viewY1, viewX2, viewY2, 0x88000000);
 
         final float yawDeg = client.gameRenderer.mainCamera().yRot();
-        final Vec3 p = Main.getRidingPlayer().getEyePosition(tickDelta);
+        final Vec3 p = Main.getCameraPlayer().getEyePosition(tickDelta);
 
         final double blockToScreen = scaledRadius / MAX_DIST;
         final int texRegion = 2 * (int) Math.ceil(MAX_DIST * SQRT2);
@@ -514,10 +514,10 @@ final class MinimapRenderer {
         final double rx = Math.cos(yawRad);
         final double rz = Math.sin(yawRad);
 
-        final float myKartYaw = getKartBodyYaw(Main.getRidingPlayer(), tickDelta);
+        final float myKartYaw = getKartBodyYaw(Main.getCameraPlayer(), tickDelta);
         final float delta = (myKartYaw - yawDeg) + IMAGE_CORRECTION_TRICK;
 
-        final int selfOutlineColor = outlineColorFor(Main.getRidingPlayer());
+        final int selfOutlineColor = outlineColorFor(Main.getCameraPlayer());
 
         // 나
         drawSelfMarker(context, centerX, centerY, selfIconSize, delta);
@@ -542,7 +542,7 @@ final class MinimapRenderer {
 
         // 적
         for (AbstractClientPlayer other : client.level.players()) {
-            if (other == Main.getRidingPlayer()) continue;
+            if (other == Main.getCameraPlayer()) continue;
             if (other == other.getRootVehicle()) continue;
 
             final Vec3 q = other.getEyePosition(tickDelta);

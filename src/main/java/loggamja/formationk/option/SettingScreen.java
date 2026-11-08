@@ -53,7 +53,7 @@ public class SettingScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        context.centeredText(this.font, Component.translatable("formationk.setting.title").getString(), this.width / 2, this.startY / 2, 0xFFFFFF);
+        context.centeredText(this.font, Component.translatable("formationk.setting.title").getString(), this.width / 2, this.startY / 2, 0xFFFFFFFF);
         super.extractRenderState(context, mouseX, mouseY, delta);
     }
 

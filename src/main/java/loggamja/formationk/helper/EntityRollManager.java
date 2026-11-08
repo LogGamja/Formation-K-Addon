@@ -1,9 +1,7 @@
 package loggamja.formationk.helper;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
+import loggamja.formationk.Main;
 import net.minecraft.util.Mth;
-import net.minecraft.world.TickRateManager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,16 +16,8 @@ public class EntityRollManager {
                 current,
                 targetRollDeg,
                 System.nanoTime() / 1_000_000L,
-                Math.round(durationTicks * getMillisPerTick())
+                Math.round(durationTicks * Main.getSecondsPerTick() * 1000f)
         ));
-    }
-    private static float getMillisPerTick() {
-        Minecraft client = Minecraft.getInstance();
-        ClientLevel world = client.level;
-        if (world == null) return 50;
-
-        TickRateManager tickManager = world.tickRateManager();
-        return tickManager.millisecondsPerTick();
     }
 
     public static float getCurrentRoll(UUID entityId) {

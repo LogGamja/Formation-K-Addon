@@ -65,7 +65,7 @@ public class Radar implements ClientModInitializer {
         return shadowEntities;
     }
     private void renderRadar(GuiGraphicsExtractor context, float tickDelta) {
-        if (!Main.isRidingKart) return;
+        if (!Main.isCameraPlayerRidingKart) return;
         if (Config.INSTANCE.RadarOption != 1) return;
 
         Minecraft client = Minecraft.getInstance();
@@ -88,11 +88,11 @@ public class Radar implements ClientModInitializer {
         final double fx = -Math.sin(yawRad);
         final double fz =  Math.cos(yawRad);
 
-        final Vec3 p = Main.getRidingPlayer().getEyePosition(tickDelta);
+        final Vec3 p = Main.getCameraPlayer().getEyePosition(tickDelta);
 
         // 적
         for (Player other : Objects.requireNonNull(client.level).players()) {
-            if (other == Main.getRidingPlayer()) continue;
+            if (other == Main.getCameraPlayer()) continue;
             if (other == other.getRootVehicle()) continue;
 
             drawArrowIfBehind(context, other.getEyePosition(tickDelta), p, fx, fz, yawRad,

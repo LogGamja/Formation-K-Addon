@@ -1,5 +1,7 @@
 package loggamja.formationk.mixin;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import loggamja.formationk.Main;
 import loggamja.formationk.helper.FlashbackDetector;
 import loggamja.formationk.option.Config;
@@ -16,8 +18,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-// 1000 미만: calculateFov HEAD에서 Flashback보다 먼저 짜여야 아래 리플레이 분기가 산다
-// 인젝션 포인트는 weaving 전에 일괄 해석되므로 먼저 짜인 쪽이 먼저 실행된다
 @Mixin(value = Camera.class, priority = 900)
 public abstract class CameraFovMixin {
     // Flashback용
@@ -36,7 +36,7 @@ public abstract class CameraFovMixin {
     private void formationk$beforeFovMultiplierUpdate(CallbackInfo ci) {
         formationk$restoreFovEffectScale();
 
-        if (!Main.isRidingKart) return;
+        if (!Main.isCameraPlayerRidingKart) return;
 
         formationk$backupFovEffectScale = formationk$options.fovEffectScale().get();
         formationk$isFovEffectScaleBackupedThisFrame = true;
@@ -64,18 +64,11 @@ public abstract class CameraFovMixin {
         // 옵션 오염 방지 안전망
         formationk$restoreFov();
 
-        if (!Main.isRidingKart) return;
+        if (!Main.isCameraPlayerRidingKart) return;
 
         if (FlashbackDetector.isOverridingFov()) return;
 
         if (Config.INSTANCE.cameraMode == 0) {
-            if (FlashbackDetector.isInReplay()) {
-                float multiplier = Mth.lerp(tickDelta, oldFovModifier, fovModifier);
-
-                cir.setReturnValue(Config.INSTANCE.FOV * multiplier);
-                return;
-            }
-
             formationk$backupFov = formationk$options.fov().get();
             formationk$isFovBackupedThisFrame = true;
 
@@ -83,12 +76,31 @@ public abstract class CameraFovMixin {
             formationk$options.fov().set(customFov);
         }
         else {
-            var interpolatedFOV  = Mth.lerp(tickDelta, loggamja.formationk.Camera.filteredFOVAtPrevTick, loggamja.formationk.Camera.filteredFOV);
-            if (formationk$options.getCameraType() == CameraType.FIRST_PERSON) {
-                interpolatedFOV  *= 0.825f;
-            }
-            cir.setReturnValue(interpolatedFOV);
+            cir.setReturnValue(formationk$getCameraModeFov(tickDelta));
         }
+    }
+    // Flashback은 calculateFov를 @WrapMethod로 감싸 리플레이 중엔 원본(위 HEAD 포함)을 부르지 않으므로 호출부에서 감싼다
+    @WrapOperation(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Camera;calculateFov(F)F"))
+    private float formationk$calculateFovInReplay(Camera camera, float tickDelta, Operation<Float> original) {
+        if (!FlashbackDetector.isInReplay()
+                || !Main.isCameraPlayerRidingKart
+                || FlashbackDetector.isOverridingFov()
+                || camera.isPanoramicMode()) {
+            return original.call(camera, tickDelta);
+        }
+
+        if (Config.INSTANCE.cameraMode == 0) {
+            return Config.INSTANCE.FOV * Mth.lerp(tickDelta, oldFovModifier, fovModifier);
+        }
+        return formationk$getCameraModeFov(tickDelta);
+    }
+    @Unique
+    private float formationk$getCameraModeFov(float tickDelta) {
+        float interpolatedFOV = Mth.lerp(tickDelta, loggamja.formationk.Camera.filteredFOVAtPrevTick, loggamja.formationk.Camera.filteredFOV);
+        if (formationk$options.getCameraType() == CameraType.FIRST_PERSON) {
+            interpolatedFOV *= 0.825f;
+        }
+        return interpolatedFOV;
     }
     @Inject(method = "calculateFov", at = @At(value = "TAIL"))
     private void formationk$afterGetFov(float tickDelta, CallbackInfoReturnable<Float> cir) {

@@ -25,7 +25,7 @@ public class ClientPlayNetworkHandlerMixin {
     @Inject(method = "setActionBarText", at = @At("HEAD"))
     private void formationk$onHandleGameMessage(ClientboundSetActionBarTextPacket packet, CallbackInfo ci) {
         if (!Minecraft.getInstance().isSameThread()) return;
-        if (!Main.isRidingKart || !Main.isPlayingInGame()) return;
+        if (!Main.isCameraPlayerRidingKart || !Main.isPlayingInGame()) return;
 
         Component message = packet.text();
         var speed = formationk$extractSpeed(message.getString());

@@ -38,7 +38,7 @@ public abstract class GameRendererMixin {
 
     @Inject(method = "render", at = @At(value = "TAIL"))
     private void formationk$renderTail(CallbackInfo ci) {
-        if (!Main.isRidingKart || !Main.isPlayingInGame() || !Config.INSTANCE.PacketAcceleration) return;
+        if (!Main.isCameraPlayerRidingKart || !Main.isPlayingInGame() || !Config.INSTANCE.PacketAcceleration) return;
 
         // 300프레임 리미트
         long now = System.nanoTime();
@@ -47,7 +47,7 @@ public abstract class GameRendererMixin {
 
         LocalPlayer player = Objects.requireNonNull(Minecraft.getInstance().player);
 
-        if (player == Main.getRidingPlayer()) {
+        if (player == Main.getCameraPlayer()) {
             Input input = formationk$getPlayerInput(player);
 
             if (!this.formationk$lastPlayerInput.equals(input)) {

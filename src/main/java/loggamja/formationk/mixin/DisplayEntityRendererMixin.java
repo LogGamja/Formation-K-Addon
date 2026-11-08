@@ -24,11 +24,12 @@ import java.util.UUID;
 @Mixin(DisplayRenderer.class)
 public class DisplayEntityRendererMixin {
 
-    // 렌더링은 클라이언트 단일 스레드에서만 도니 재사용 가능. 롤 회전 중인 엔티티마다 매 프레임
-    // new Matrix4f를 할당하던 것을 없애 GC 압박을 줄인다.
+    // GC 완화용 스크래치
     @Unique private static final Matrix4f formationk$scratchOriginal = new Matrix4f();
     @Unique private static final Matrix4f formationk$scratchInverse = new Matrix4f();
     @Unique private static final Matrix4f formationk$scratchRoll = new Matrix4f();
+
+    @Unique private static final float formationk$MIN_DETERMINANT = Float.MIN_NORMAL;
 
     // render() 호출 시 MatrixStack에 roll rotation을 주입합니다.
     // AT 타겟: setupTransforms 이후, 실제 geometry 렌더링 직전
@@ -58,6 +59,10 @@ public class DisplayEntityRendererMixin {
 
         Transformation affine = state.renderState.transformation().get(state.interpolationProgress);
         formationk$scratchOriginal.set(affine.getMatrix());
+        
+        // 작은 디스플레이 검사하지 않음
+        if (Math.abs(formationk$scratchOriginal.determinant()) < formationk$MIN_DETERMINANT) return;
+        
         formationk$scratchInverse.set(formationk$scratchOriginal).invert();
         formationk$scratchRoll.rotationZ((float) Math.toRadians(rollDeg));
 

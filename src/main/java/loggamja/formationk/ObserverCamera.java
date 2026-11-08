@@ -53,7 +53,7 @@ public class ObserverCamera implements ClientModInitializer {
         }
         isReset = false;
 
-        Player target = Main.getRidingPlayer();
+        Player target = Main.getCameraPlayer();
         float newYaw = resolveYaw(target, 1f);
         Vec3 pos = target.position();
 
@@ -97,7 +97,7 @@ public class ObserverCamera implements ClientModInitializer {
     }
     void updatePitch(Player target) {
         double curY = target.getY();
-        float tickInterval = Camera.getTickRate();
+        float tickInterval = Main.getSecondsPerTick();
 
         if (lastY != null && tickInterval > 0f) {
             float verticalVelocity = (float) ((curY - lastY) / tickInterval);
@@ -113,7 +113,7 @@ public class ObserverCamera implements ClientModInitializer {
     }
     // 정지상태, 루프에서는 유저의 시선을 따라감
     static boolean allowsModelRotation(Player target) {
-        return Main.getAllowModelRotation(target.getRootVehicle(), target);
+        return Main.getAllowModelRotation(target);
     }
     static float resolveYaw(Player target, float tickDelta) {
         return allowsModelRotation(target)
@@ -149,7 +149,7 @@ public class ObserverCamera implements ClientModInitializer {
         isReset = true;
     }
     public static boolean isObserverLogicActive() {
-        if (!Main.isPlayingInGame() || !Main.isRidingKart) return false;
+        if (!Main.isPlayingInGame() || !Main.isCameraPlayerRidingKart) return false;
         if (Config.INSTANCE.spectatorCameraMode == 0) return false;
 
         return Main.isSpectatingPlayer();
@@ -168,11 +168,11 @@ public class ObserverCamera implements ClientModInitializer {
         if (!isObserverLogicActive()) return vanillaYaw;
 
         // 대상 전환도 틱을 기다리면 그 사이 프레임들이 이전 대상의 앵커로 그려진다
-        Player target = Main.getRidingPlayer();
+        Player target = Main.getCameraPlayer();
         syncToTargetIfChanged(target, resolveYaw(target, 1f));
 
         // 틱을 기다리면 그 사이 프레임들이 초기화된 방향을 그대로 그린다
-        if (needsAnchorResync) syncAnchor(resolveYaw(Main.getRidingPlayer(), 1f));
+        if (needsAnchorResync) syncAnchor(resolveYaw(Main.getCameraPlayer(), 1f));
 
         long now = System.nanoTime();
         float dt = (anchorYawLastTimeNanos == 0L) ? 0f : (now - anchorYawLastTimeNanos) / 1.0e9f;

@@ -56,7 +56,6 @@ public class Suspension implements ClientModInitializer {
 
     private void onClientTick() {
         if (!Main.isPlayingInGame()) return;
-        if (Main.kartEngine == 3) return;
 
         var world = Minecraft.getInstance().level;
         if (world == null) return;
@@ -74,6 +73,10 @@ public class Suspension implements ClientModInitializer {
         int processed = 0;
         for (Player player : world.players()) {
             if (!Main.isRidingKart(player)) continue;
+            if (Main.getS2CValue(player, "data-engine-real") == 3) {
+                applyRoll(player, player.getRootVehicle().getPassengers(), 0f);
+                continue;
+            }
 
             SuspensionState st = states.computeIfAbsent(player.getUUID(), k -> {
                 SuspensionState s = new SuspensionState();
@@ -103,7 +106,7 @@ public class Suspension implements ClientModInitializer {
         List<Entity> passengers = kart.getPassengers();
 
         int isBike = Main.getS2CValue(player, "data-is-bike");
-        boolean isModelRotateAllowed = Main.getAllowModelRotation(kart, player);
+        boolean isModelRotateAllowed = Main.getAllowModelRotation(player);
 
         float playerYaw = player.getYRot();
 
@@ -181,14 +184,18 @@ public class Suspension implements ClientModInitializer {
             }
         }
 
+        applyRoll(player, passengers, (float) modelRollValue);
+    }
+
+    private static void applyRoll(Player player, List<Entity> passengers, float roll) {
         for (var i : passengers) {
             if (Main.hasCertainName(i, "formationk-modelsaddle")) {
                 for (var j : i.getPassengers()) {
-                    EntityRollManager.setRoll(j.getUUID(), (float) modelRollValue, 1);
+                    EntityRollManager.setRoll(j.getUUID(), roll, 1);
                 }
             }
         }
-        EntityRollManager.setRoll(player.getUUID(), (float) modelRollValue, 1);
+        EntityRollManager.setRoll(player.getUUID(), roll, 1);
     }
 
     static boolean detectDriftState(Entity kart) {
@@ -199,17 +206,12 @@ public class Suspension implements ClientModInitializer {
             if (!Main.hasCertainName(i, "formationk-modelsaddle")) continue;
 
             for (var j : i.getPassengers()) {
-                if (!Main.hasCertainName(j, "formationk-drift-effect") || !isDisplayEntity(j)) continue;
+                if (!Main.hasCertainName(j, "formationk-drift-effect") || !(j instanceof Display display)) continue;
 
-                return ((Display) j).getViewRange() > 0;
+                return display.getViewRange() > 0;
             }
         }
         return false;
-    }
-    static boolean isDisplayEntity(Entity entity) {
-        return entity instanceof Display.ItemDisplay
-                || entity instanceof Display.BlockDisplay
-                || entity instanceof Display.TextDisplay;
     }
     public static void clearStates() {
         states.clear();

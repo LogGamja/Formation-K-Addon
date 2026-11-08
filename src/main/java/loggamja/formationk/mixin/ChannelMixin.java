@@ -23,7 +23,7 @@ public abstract class ChannelMixin {
 
     @Inject(method = "play", at = @At("HEAD"), cancellable = true)
     private void formationk$playOnGrid(CallbackInfo ci) {
-        if (!Config.INSTANCE.smoothEngineSound || !Main.isRidingKart) return;
+        if (!Config.INSTANCE.smoothEngineSound || !Main.isCameraPlayerRidingKart) return;
         if (SoundQuantizer.isBypassing()) return;
 
         if (SoundQuantizer.schedule(this::formationk$playDelayed)) {

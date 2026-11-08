@@ -25,9 +25,8 @@ import java.util.*;
 public class Main implements ClientModInitializer {
 
     public static int kartEngine = 0;
-    public static String currentSaddleType = "none";
 
-    public static boolean isRidingKart = false;
+    public static boolean isCameraPlayerRidingKart = false;
 
     // 프레임 내부 보간용
     private static float prevTickDirectionYaw = 0f;
@@ -53,7 +52,7 @@ public class Main implements ClientModInitializer {
         // 무조건 렌더 스레드로 예약
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             client.execute(() -> {
-                isRidingKart = false;
+                updateRidingState(false);
                 hasDirectionYawSamples = false;
             });
         });
@@ -64,18 +63,17 @@ public class Main implements ClientModInitializer {
     void onClientTickEnd() {
         if (!isPlayingInGame()) return;
 
-        Entity vehicle = getRidingPlayer().getVehicle();
-        currentSaddleType = getSaddleType(vehicle);
-        kartEngine = Main.getS2CValue(Main.getRidingPlayer(), "data-engine-real");
+        boolean isRidingNow = isRidingKart(getCameraPlayer());
+        kartEngine = Main.getS2CValue(Main.getCameraPlayer(), "data-engine-real");
 
-        updateRidingState();
+        updateRidingState(isRidingNow);
 
         boolean isSampleSucceeded = false;
         if (Config.INSTANCE.RotationOption > 0) {
-            if (isRidingKart && getRidingPlayer() == client.player) {
-                Entity kartMobil = getRidingPlayer().getRootVehicle();
+            if (isCameraPlayerRidingKart && getCameraPlayer() == client.player) {
+                Entity kartMobil = getCameraPlayer().getRootVehicle();
 
-                if (getAllowModelRotation(kartMobil)) {
+                if (getAllowModelRotation(getCameraPlayer())) {
                     sampleKartRotation(kartMobil);
                     isSampleSucceeded = true;
                 }
@@ -84,22 +82,22 @@ public class Main implements ClientModInitializer {
         if (!isSampleSucceeded) hasDirectionYawSamples = false;
     }
     public static boolean isRidingKart(Player player) {
-        var kartSaddle = player.getVehicle();
-        if (kartSaddle == null) return false;
-
-        return !getSaddleType(kartSaddle).equals("none");
+        return hasCertainName(player.getVehicle(), "formationk-saddle-common");
     }
-    public static boolean getAllowModelRotation(Entity kartMobil) {
-        return getAllowModelRotation(kartMobil, getRidingPlayer());
-    }
-    public static boolean getAllowModelRotation(Entity kartMobil, Player player) {
+    public static boolean getAllowModelRotation(Player player) {
         return getS2CValue(player, "state-allow-model-rotation") == 1;
+    }
+    public static float getSecondsPerTick() {
+        var world = Minecraft.getInstance().level;
+        if (world == null) return 0.05f;
+
+        return world.tickRateManager().millisecondsPerTick() / 1000f;
     }
     public static boolean isPlayingInGame() {
         Minecraft client = Minecraft.getInstance();
         return client.level != null && client.player != null && client.getCameraEntity() != null && !client.isPaused();
     }
-    public static Player getRidingPlayer() {
+    public static Player getCameraPlayer() {
         Minecraft client = Minecraft.getInstance();
         var cameraEntity = client.getCameraEntity();
 
@@ -127,14 +125,6 @@ public class Main implements ClientModInitializer {
         }
         return player.getViewYRot(tickDelta);
     }
-    static String getSaddleType(Entity saddle) {
-        if (hasCertainName(saddle, "formationk-saddle-common")) {
-            return "common";
-        }
-        else {
-            return "none";
-        }
-    }
     public static boolean hasCertainName(Entity entity, String saddleName) {
         if (entity != null && entity.getCustomName() != null) {
             return entity.getCustomName().getString().equals(saddleName);
@@ -143,19 +133,20 @@ public class Main implements ClientModInitializer {
             return false;
         }
     }
-    void updateRidingState() {
-        if (currentSaddleType.equals("none") == isRidingKart) {
-            isRidingKart = !isRidingKart;
+    void updateRidingState(boolean isRidingNow) {
+        if (isRidingNow != isCameraPlayerRidingKart) {
+            isCameraPlayerRidingKart = isRidingNow;
 
             Camera.lastPos = null;
             hasDirectionYawSamples = false;
             Minimap.clearAllMap();
+            Overtake.resetGauge();
             autoThirdPerson();
         }
     }
     void autoThirdPerson() {
         if (Config.INSTANCE.useAutoThirdPerson) {
-            if (isRidingKart) {
+            if (isCameraPlayerRidingKart) {
                 client.options.setCameraType(CameraType.THIRD_PERSON_BACK);
             }
             else {
@@ -164,7 +155,7 @@ public class Main implements ClientModInitializer {
         }
     }
     void sampleKartRotation(Entity kartMobil) {
-        var player = getRidingPlayer();
+        var player = getCameraPlayer();
         if (kartMobil == player) return;
 
         List<Entity> passengers = kartMobil.getPassengers();
@@ -180,7 +171,7 @@ public class Main implements ClientModInitializer {
     public static void onFrameRender(float partialTick) {
         if (!isPlayingInGame()) return;
 
-        if (isRidingKart) {
+        if (isCameraPlayerRidingKart) {
             applyKartRotationThisFrame(partialTick);
         }
         // 상체 고정은 내가 카트를 타지 않았을 때도 다른 사람에게 적용된다
@@ -189,11 +180,11 @@ public class Main implements ClientModInitializer {
         }
     }
     static void applyKartRotationThisFrame(float partialTick) {
-        var player = getRidingPlayer();
+        var player = getCameraPlayer();
         if (Config.INSTANCE.RotationOption > 0 && player == client.player) {
             Entity kartMobil = player.getRootVehicle();
 
-            if (kartMobil != player && getAllowModelRotation(kartMobil)) {
+            if (kartMobil != player && getAllowModelRotation(player)) {
                 List<Entity> passengers = kartMobil.getPassengers();
                 for (var i : passengers) {
                     if (!hasCertainName(i, "formationk-direction")) continue;
@@ -239,10 +230,10 @@ public class Main implements ClientModInitializer {
         }
     }
     static float calculateRotation(float directionYaw) {
-        float playerYaw = getRidingPlayer().getYRot();
+        float playerYaw = getCameraPlayer().getYRot();
 
         if (kartEngine == 1002) {
-            int driftState = Main.getS2CValue(Main.getRidingPlayer(), "state-drift");
+            int driftState = Main.getS2CValue(Main.getCameraPlayer(), "state-drift");
             if (driftState == 1) {
                 return Mth.wrapDegrees(playerYaw);
             }

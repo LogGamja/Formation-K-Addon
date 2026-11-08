@@ -87,11 +87,11 @@ public class CategoryScreen extends Screen {
             int sliderX = (col == 0) ? leftX : rightX;
 
             AbstractSliderButton slider = new AbstractSliderButton(sliderX, sliderY,
-                    buttonWidth, buttonHeight, Component.literal(labelText + ": " + (int) value), normalized) {
+                    buttonWidth, buttonHeight, Component.literal(labelText + ": " + Math.round(value)), normalized) {
                 @Override
                 protected void updateMessage() {
                     double actual = min + this.value * (max - min);
-                    this.setMessage(Component.literal(labelText + ": " + (int) actual));
+                    this.setMessage(Component.literal(labelText + ": " + Math.round(actual)));
                 }
 
                 @Override
@@ -120,7 +120,7 @@ public class CategoryScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        context.centeredText(this.font, Component.translatable(category.labelKey()).getString(), this.width / 2, this.startY / 2, 0xFFFFFF);
+        context.centeredText(this.font, Component.translatable(category.labelKey()).getString(), this.width / 2, this.startY / 2, 0xFFFFFFFF);
         super.extractRenderState(context, mouseX, mouseY, delta);
     }
 

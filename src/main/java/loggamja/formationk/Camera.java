@@ -5,11 +5,8 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.CameraType;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.util.Mth;
-import net.minecraft.world.TickRateManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,7 +48,7 @@ public class Camera implements ClientModInitializer {
     }
 
     void onClientTickStart() {
-        if (!Main.isPlayingInGame() || !Main.isRidingKart) return;
+        if (!Main.isPlayingInGame() || !Main.isCameraPlayerRidingKart) return;
 
         // 카트의 틱당 위치 차분(realSpeed/realDirection)은 카메라 연출 옵션(cameraMode)과 무관하게 항상 갱신되어야 함
         calculateSpeed();
@@ -85,7 +82,7 @@ public class Camera implements ClientModInitializer {
             filteredFOV = interpolate(filteredFOV, filteredTargetFOV, 0.65f);
         }
 
-        final double deltaTime = getTickRate();
+        final double deltaTime = Main.getSecondsPerTick();
 
         final double ARM_SPEED_FORWARD = 0.08 * armSpeedMultiplier;
         final double ARM_SPEED_BACKWARD = 4 * armSpeedMultiplier;
@@ -111,18 +108,8 @@ public class Camera implements ClientModInitializer {
 
         //System.out.println(linearMap(cameraDistanceOffset, BASE_DISTANCE, 815, 600, 815));
     }
-    static float getTickRate() {
-        final Minecraft client = Minecraft.getInstance();
-        final ClientLevel world = client.level;
-
-        if (world != null) {
-            TickRateManager tickManager = world.tickRateManager();
-            return tickManager.millisecondsPerTick() / 1000;
-        }
-        return 0.05f;
-    }
     void calculateSpeed() {
-        Vec3 cur = Main.getRidingPlayer().getEyePosition(1);
+        Vec3 cur = Main.getCameraPlayer().getEyePosition(1);
 
         if (lastPos != null) {
             float dx = (float) (cur.x - lastPos.x);
@@ -130,7 +117,7 @@ public class Camera implements ClientModInitializer {
             float dz = (float) (cur.z - lastPos.z);
             float distPerTick = (float) Math.sqrt(dx*dx + dy*dy + dz*dz);
 
-            float tickInterval = getTickRate();
+            float tickInterval = Main.getSecondsPerTick();
             if (tickInterval > 0f) {
                 realSpeed = (distPerTick / tickInterval) * 3.6f;
             }
@@ -152,22 +139,12 @@ public class Camera implements ClientModInitializer {
         filteredTargetFOV = Collections.max(targetFovBuffer);
     }
     void detectBooster() {
-        if (client.player == null) return;
+        var boostState = Main.getS2CValue(Main.getCameraPlayer(), "state-boost");
 
-        // 나 자신의 effect 감지
-        var effect = client.player.getEffect(MobEffects.DOLPHINS_GRACE);
-        var boostState = Main.getS2CValue(Main.getRidingPlayer(), "state-boost");
-
-        if (effect != null && effect.getAmplifier() == 169) {
-            isUsingBooster = true;
-        }
-        else {
-            if (Main.kartEngine == 0) isUsingBooster = boostState > 1;
-            else isUsingBooster = boostState > 0;
-        }
+        isUsingBooster = boostState > 0;
     }
     public static float interpolate(float current, float target, float temporalGradient) {
-        float tickInterval = getTickRate();
+        float tickInterval = Main.getSecondsPerTick();
 
         // 틱레이트가 극단적으로 느려지면 alpha가 1을 넘어 목표를 지나쳐 진동
         float alpha = Mth.clamp(tickInterval * temporalGradient, 0f, 1f);
