@@ -32,7 +32,6 @@ public class Camera implements ClientModInitializer {
     static double linearTransformTargetBaseDistance = BASE_DISTANCE;
 
     static Vec3 lastPos = null;
-    float speed = 0f;
     public static float realSpeed = 0f;
     public static float realDirection = 0f;
 
@@ -87,11 +86,8 @@ public class Camera implements ClientModInitializer {
         final double ARM_SPEED_FORWARD = 0.08 * armSpeedMultiplier;
         final double ARM_SPEED_BACKWARD = 4 * armSpeedMultiplier;
 
-        // 데이터팩이 속도계에 실제 속도(km/h)를 그대로 표시한다. ALPHA는 mixin에서 단위를 보정한다
-        final float actionbarSpeedReal = actionbarSpeed;
-
         timeAfterLastActionbar++;
-        speed = (timeAfterLastActionbar > 20) ? realSpeed : actionbarSpeedReal;
+        float speed = (timeAfterLastActionbar > 20) ? realSpeed : actionbarSpeed;
         if (realSpeed > speed) speed++;
 
         final double convertedSpeed = speed * 24.83;

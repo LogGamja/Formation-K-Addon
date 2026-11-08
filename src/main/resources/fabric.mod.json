@@ -11,7 +11,7 @@
 		"homepage": "애옹이",
 		"sources": "애옹이"
 	},
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"icon": "assets/formationk-official/icon.png",
 	"environment": "*",
 	"entrypoints": {

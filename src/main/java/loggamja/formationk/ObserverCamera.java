@@ -14,9 +14,8 @@ import java.util.UUID;
 // 옵저버 카메라: 실제로 다른 라이더를 관전 중일 때 작동
 public class ObserverCamera implements ClientModInitializer {
     static final double TELEPORT_DISTANCE_THRESHOLD = 16.0;
-    static UUID lastObservedTargetUuid = null;
+    static UUID lastObservedTargetUUID = null;
     static Vec3 lastObservedPos = null;
-    static boolean isReset = true;
 
     static final float DEFAULT_PITCH = 15f;
     static final float MIN_PITCH = 10f;
@@ -48,10 +47,9 @@ public class ObserverCamera implements ClientModInitializer {
     }
     void onClientTickStart() {
         if (!isObserverLogicActive()) {
-            if (!isReset) reset();
+            if (lastObservedTargetUUID != null) reset();
             return;
         }
-        isReset = false;
 
         Player target = Main.getCameraPlayer();
         float newYaw = resolveYaw(target, 1f);
@@ -63,7 +61,7 @@ public class ObserverCamera implements ClientModInitializer {
 
         if (teleported) resync(newYaw);
 
-        lastObservedTargetUuid = target.getUUID();
+        lastObservedTargetUUID = target.getUUID();
         lastObservedPos = pos;
 
         updatePitch(target);
@@ -73,10 +71,10 @@ public class ObserverCamera implements ClientModInitializer {
     // 틱 핸들러와 렌더 경로(updateAnchorYaw) 양쪽에서 호출되므로, 어느 쪽이 먼저 대상 전환을
     // 감지하더라도 나머지 한쪽이 중복 리싱크하지 않도록 UUID 갱신까지 여기서 함께 처리한다
     static boolean syncToTargetIfChanged(Player target, float newYaw) {
-        if (target.getUUID().equals(lastObservedTargetUuid)) return false;
+        if (target.getUUID().equals(lastObservedTargetUUID)) return false;
 
         resync(newYaw);
-        lastObservedTargetUuid = target.getUUID();
+        lastObservedTargetUUID = target.getUUID();
         lastObservedPos = target.position();
         return true;
     }
@@ -134,7 +132,7 @@ public class ObserverCamera implements ClientModInitializer {
         return sum / verticalVelocityBuffer.size();
     }
     static void reset() {
-        lastObservedTargetUuid = null;
+        lastObservedTargetUUID = null;
         lastObservedPos = null;
 
         lastY = null;
@@ -146,7 +144,6 @@ public class ObserverCamera implements ClientModInitializer {
         anchorYawLastTimeNanos = 0L;
         renderedAnchorYaw = 0f;
         needsAnchorResync = true;
-        isReset = true;
     }
     public static boolean isObserverLogicActive() {
         if (!Main.isPlayingInGame() || !Main.isCameraPlayerRidingKart) return false;

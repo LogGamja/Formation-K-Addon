@@ -144,7 +144,7 @@ public class Suspension implements ClientModInitializer {
         clampedDriftAngle = (float) (a * Math.atan(b / a * clampedDriftAngle));
 
         if (isBike == 1) {
-            if (Config.INSTANCE.bikeSuspension == 3) {
+            if (Config.INSTANCE.bikeSuspension == 2) {
                 clampedDriftAngle *= 5;
             }
         }
@@ -154,16 +154,9 @@ public class Suspension implements ClientModInitializer {
         SpringSimulator.step(st.spring, DT, FREQ, Q, -(clampedDriftAngle / 2f));
         double modelRollValue = Math.toDegrees(st.spring.x);
 
-        if (isBike == 1) {
-            if (Config.INSTANCE.bikeSuspension == 0) {
-                modelRollValue = 0;
-            }
-            else if (Config.INSTANCE.bikeSuspension == 1) {
-                // 4-Wheel: 바이크가 아닌 것처럼 처리 (카트와 동일)
-            }
-            else {
-                modelRollValue *= -1;
-            }
+        // 4륜 카트 옵션
+        if (isBike == 1 && Config.INSTANCE.bikeSuspension != 1) {
+            modelRollValue *= -1;
         }
 
         applyRoll(player, passengers, (float) modelRollValue);

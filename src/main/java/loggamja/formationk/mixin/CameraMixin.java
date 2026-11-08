@@ -87,7 +87,7 @@ public class CameraMixin {
         // 0이어도 그대로 반영해야 평균이 0으로 수렴한다
         float raw = EntityRollManager.getCurrentRoll(player.getUUID()) * formationk$ROLL_MULTIPLIER;
         var isBike = Main.getS2CValue(player, "data-is-bike");
-        if (isBike == 1 && Config.INSTANCE.bikeSuspension == 3) {
+        if (isBike == 1 && Config.INSTANCE.bikeSuspension == 2) {
             raw /= 4;
         }
 

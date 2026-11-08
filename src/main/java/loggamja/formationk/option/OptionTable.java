@@ -95,7 +95,7 @@ public final class OptionTable {
             ),
             new ToggleDef(
                     "bike_suspension", Category.VISUAL,
-                    new String[]{"formationk.option.bike_suspension.default", "formationk.option.bike_suspension.four_wheel", "formationk.option.bike_suspension.realistic", "formationk.option.bike_suspension.extreme"},
+                    new String[]{"formationk.option.bike_suspension.default", "formationk.option.bike_suspension.four_wheel", "formationk.option.bike_suspension.extreme"},
                     "formationk.tooltip.bike_suspension",
                     () -> Config.INSTANCE.bikeSuspension,
                     v -> Config.INSTANCE.bikeSuspension = v

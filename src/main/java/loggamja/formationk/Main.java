@@ -33,6 +33,8 @@ public class Main implements ClientModInitializer {
     private static float tickDirectionYaw = 0f;
     private static boolean hasDirectionYawSamples = false;
 
+    private static boolean isFirstSteerBoostTick = false;
+
     static Minecraft client = Minecraft.getInstance();
 
     @Override
@@ -161,6 +163,7 @@ public class Main implements ClientModInitializer {
         List<Entity> passengers = kartMobil.getPassengers();
         for (var i: passengers) {
             if (hasCertainName(i, "formationk-direction")) {
+                isFirstSteerBoostTick = !hasDirectionYawSamples;
                 prevTickDirectionYaw = hasDirectionYawSamples ? tickDirectionYaw : i.getYRot();
                 tickDirectionYaw = i.getYRot();
                 hasDirectionYawSamples = true;
@@ -254,11 +257,13 @@ public class Main implements ClientModInitializer {
         List<Entity> models = entity.getPassengers();
 
         entity.setYRot(angle);
-        entity.yRotO = angle;
+        
+        // 조작 가속 발동 시점에 하드 스냅 방지
+        if (!isFirstSteerBoostTick) entity.yRotO = angle;
 
         for (var j: models) {
             j.setYRot(angle);
-            j.yRotO = angle;
+            if (!isFirstSteerBoostTick) j.yRotO = angle;
         }
     }
     static float getOverShootAngle(float deltaAngle) {

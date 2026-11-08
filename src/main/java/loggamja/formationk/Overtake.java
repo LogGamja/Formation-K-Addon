@@ -13,8 +13,7 @@ import net.minecraft.util.Mth;
 public class Overtake implements ClientModInitializer {
     private static final double GUI_SCALE_BASIS = 4.0;
 
-    static boolean isChargingOvertake = false;
-    static boolean isOvertakeActive = false;
+    static int lastOvertakeState = 0;
 
     static int overtakeChargeTick;
     static int prevOvertakeChargeTick;
@@ -39,11 +38,11 @@ public class Overtake implements ClientModInitializer {
             prevOvertakeChargeTick = overtakeChargeTick;
             overtakeChargeTick--;
 
-            if (!isChargingOvertake && (overtakeState == 1)) overtakeChargeTick = prevOvertakeChargeTick = 50;
-            if (!isOvertakeActive && (overtakeState == 2)) overtakeChargeTick = prevOvertakeChargeTick = 390;
-
-            isChargingOvertake = overtakeState == 1;
-            isOvertakeActive = overtakeState == 2;
+            if (overtakeState != lastOvertakeState) {
+                if (overtakeState == 1) overtakeChargeTick = prevOvertakeChargeTick = 50;
+                if (overtakeState == 2) overtakeChargeTick = prevOvertakeChargeTick = 390;
+            }
+            lastOvertakeState = overtakeState;
         }
         else {
             resetGauge();
@@ -52,20 +51,19 @@ public class Overtake implements ClientModInitializer {
     static void resetGauge() {
         overtakeChargeTick = 0;
         prevOvertakeChargeTick = 0;
-        isChargingOvertake = false;
-        isOvertakeActive = false;
+        lastOvertakeState = 0;
     }
     public void render(GuiGraphicsExtractor context, float tickDelta) {
         if (!Main.isCameraPlayerRidingKart || !Main.isPlayingInGame() || !Config.INSTANCE.useOvertakeGauge) return;
 
         int blueColor = 0xFF0080FF;
         int yellowColor = 0xFFFFFF00;
-        if (isChargingOvertake) {
+        if (lastOvertakeState == 1) {
             float chargeTick = Mth.lerp(tickDelta, prevOvertakeChargeTick, overtakeChargeTick);
             float progress = (50 - chargeTick) / 50f;
             renderVerticalGauge(context, blueColor, progress, "");
         }
-        if (isOvertakeActive) {
+        if (lastOvertakeState == 2) {
             if (389 <= overtakeChargeTick) {
                 renderVerticalGauge(context, yellowColor, 1, "");
             }

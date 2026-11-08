@@ -59,7 +59,6 @@
 
   "formationk.option.bike_suspension.default": "Bike Suspension: Default",
   "formationk.option.bike_suspension.four_wheel": "Bike Suspension: 4-Wheel",
-  "formationk.option.bike_suspension.realistic": "Bike Suspension: Realistic",
   "formationk.option.bike_suspension.extreme": "Bike Suspension: Extreme!",
   "formationk.tooltip.bike_suspension": "Change bike suspension effect when enable suspension effect.",
 

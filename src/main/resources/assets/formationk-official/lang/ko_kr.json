@@ -59,7 +59,6 @@
 
   "formationk.option.bike_suspension.default": "바이크 서스펜션: 기본",
   "formationk.option.bike_suspension.four_wheel": "바이크 서스펜션: 4륜 카트",
-  "formationk.option.bike_suspension.realistic": "바이크 서스펜션: 현실적",
   "formationk.option.bike_suspension.extreme": "바이크 서스펜션: 익스트림",
   "formationk.tooltip.bike_suspension": "서스펜션 효과 활성화 시 바이크의 서스펜션 연출을 변경합니다.",
 
