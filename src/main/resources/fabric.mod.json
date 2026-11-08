@@ -1,0 +1,45 @@
+{
+	"schemaVersion": 1,
+	"id": "formationk-official",
+	"version": "${version}",
+	"name": "Formation K Addon",
+	"description": "포메이션 K 데이터팩의 사용자 경험을 개선합니다.\nEnhance user experience when playing the Formation K datapack.",
+	"authors": [
+		"LogGamja"
+	],
+	"contact": {
+		"homepage": "애옹이",
+		"sources": "애옹이"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/formationk-official/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+          "loggamja.formationk.server.ServerMain"
+		],
+		"client": [
+          "loggamja.formationk.Main",
+          "loggamja.formationk.minimap.Minimap",
+          "loggamja.formationk.Radar",
+          "loggamja.formationk.Overtake",
+          "loggamja.formationk.Camera",
+          "loggamja.formationk.ObserverCamera",
+          "loggamja.formationk.Suspension"
+		]
+	},
+	"mixins": [
+		"formationk.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*"
+	},
+	"suggests": {
+        "tick-sync": "*"
+    },
+    "breaks": {
+    }
+}

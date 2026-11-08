@@ -1,0 +1,84 @@
+{
+  "formationk.setting.title": "Formation K 설정",
+  "formationk.setting.menu_button": "Formation K 설정",
+  "formationk.setting.ok": "완료",
+
+  "formationk.setting.category.basic": "기본",
+  "formationk.setting.category.visual": "비주얼",
+  "formationk.setting.category.ui": "인터페이스",
+  "formationk.setting.category.camera": "카메라",
+
+  "formationk.option.steer_boost.off": "조작 가속: 꺼짐",
+  "formationk.option.steer_boost.extreme": "조작 가속: 극한",
+  "formationk.tooltip.steer_boost": "카트 탑승 시 조작감을 최적화합니다.",
+
+  "formationk.option.packet_boost.off": "패킷 가속: 꺼짐",
+  "formationk.option.packet_boost.on": "패킷 가속: 켜짐",
+  "formationk.tooltip.packet_boost": "카트 탑승 시 조작 데이터 송신을 가속합니다.",
+
+  "formationk.option.enemy_radar.off": "카트 레이더: 꺼짐",
+  "formationk.option.enemy_radar.on": "카트 레이더: 켜짐",
+  "formationk.tooltip.enemy_radar": "카트 탑승 시 주변 레이서의 방향을 화살표로 표시합니다.",
+
+  "formationk.option.overtake_gauge.off": "오버테이크 게이지: 꺼짐",
+  "formationk.option.overtake_gauge.on": "오버테이크 게이지: 켜짐",
+  "formationk.tooltip.overtake_gauge": "카트 탑승 시 오버테이크 게이지를 표시합니다.",
+
+  "formationk.option.auto_third_person.off": "자동 3인칭: 꺼짐",
+  "formationk.option.auto_third_person.on": "자동 3인칭: 켜짐",
+  "formationk.tooltip.auto_third_person": "카트 탑승 시 자동으로 카메라 시점을 전환합니다.",
+
+  "formationk.option.noclip_camera.off": "카메라 통과: 꺼짐",
+  "formationk.option.noclip_camera.on": "카메라 통과: 켜짐",
+  "formationk.tooltip.noclip_camera": "카트 탑승 시 3인칭 카메라가 블록에 걸리지 않게 합니다.",
+
+  "formationk.option.camera_mode.default": "카메라 모드: 기본[1]",
+  "formationk.option.camera_mode.balance": "카메라 모드: 균형[2]",
+  "formationk.option.camera_mode.normal": "카메라 모드: 보통[3]",
+  "formationk.option.camera_mode.emphasis": "카메라 모드: 강조[4]",
+  "formationk.tooltip.camera_mode": "카트 탑승 시 카메라 연출 방식을 선택할 수 있습니다.",
+
+  "formationk.option.spectator_camera.off": "관전 카메라: 꺼짐",
+  "formationk.option.spectator_camera.formationk": "관전 카메라: Formation K",
+  "formationk.tooltip.spectator_camera": "다른 레이서를 관전할 때 카메라 연출 방식을 선택합니다.",
+
+  "formationk.option.suspension_effect.off": "서스펜션 효과: 꺼짐",
+  "formationk.option.suspension_effect.kart": "서스펜션 효과: 차체",
+  "formationk.option.suspension_effect.kart_and_camera": "서스펜션 효과: 차체와 카메라",
+  "formationk.tooltip.suspension_effect": "카트 탑승 시 드리프트 서스펜션 효과를 선택합니다.",
+
+  "formationk.option.player_body_lock.off": "플레이어 상체 고정: 꺼짐",
+  "formationk.option.player_body_lock.on": "플레이어 상체 고정: 켜짐",
+  "formationk.tooltip.player_body_lock": "플레이어 몸체를 카트와 일치시켜 깔끔하게 보이게 합니다.",
+  "formationk.option.player_head_lock.off": "플레이어 머리 고정: 꺼짐",
+  "formationk.option.player_head_lock.on": "플레이어 머리 고정: 켜짐",
+  "formationk.tooltip.player_head_lock": "카트 탑승 시 플레이어 머리가 카메라를 곧바로 따라가게 합니다.",
+  "formationk.option.smooth_engine_sound.off": "부드러운 엔진음: 꺼짐",
+  "formationk.option.smooth_engine_sound.on": "부드러운 엔진음: 켜짐",
+  "formationk.tooltip.smooth_engine_sound": "카트 탑승 시 26.1보다 낮은 버전의 소리 재생으로 엔진음을 부드럽게 합니다.",
+
+  "formationk.option.bike_suspension.default": "바이크 서스펜션: 기본",
+  "formationk.option.bike_suspension.four_wheel": "바이크 서스펜션: 4륜 카트",
+  "formationk.option.bike_suspension.realistic": "바이크 서스펜션: 현실적",
+  "formationk.option.bike_suspension.extreme": "바이크 서스펜션: 익스트림",
+  "formationk.tooltip.bike_suspension": "서스펜션 효과 활성화 시 바이크의 서스펜션 연출을 변경합니다.",
+
+  "formationk.option.auto_save_delay.off": "자동 저장 지연: 꺼짐",
+  "formationk.option.auto_save_delay.on": "자동 저장 지연: 켜짐",
+  "formationk.tooltip.auto_save_delay": "싱글플레이 레이스 중 월드 자동 저장을 미뤄 렉을 줄입니다.",
+
+  "formationk.option.track_minimap.off": "트랙 미니맵: 꺼짐",
+  "formationk.option.track_minimap.bottom_left": "트랙 미니맵: 좌측 하단",
+  "formationk.option.track_minimap.bottom_right": "트랙 미니맵: 우측 하단",
+  "formationk.option.track_minimap.left_middle": "트랙 미니맵: 좌측 중간",
+  "formationk.option.track_minimap.right_middle": "트랙 미니맵: 우측 중간",
+  "formationk.option.track_minimap.top_left": "트랙 미니맵: 좌측 상단",
+  "formationk.option.track_minimap.top_right": "트랙 미니맵: 우측 상단",
+  "formationk.option.track_minimap.debug": "트랙 미니맵: 디버그",
+  "formationk.tooltip.track_minimap": "카트 탑승 시 주변을 자동으로 탐색해 미니맵과 레이서 위치를 보여줍니다.",
+
+  "formationk.slider.riding_fov": "주행 시야 범위",
+  "formationk.slider.riding_fov.tooltip": "카메라 모드 '기본' 상태에서만 적용됩니다.",
+  "formationk.slider.riding_fov_effects": "주행 시야 효과",
+  "formationk.slider.riding_fov_effects.tooltip": "카메라 모드 '기본' 상태에서만 적용됩니다."
+}

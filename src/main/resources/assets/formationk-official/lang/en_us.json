@@ -1,0 +1,84 @@
+{
+  "formationk.setting.title": "Formation K Settings",
+  "formationk.setting.menu_button": "Formation K Settings",
+  "formationk.setting.ok": "Done",
+
+  "formationk.setting.category.basic": "Basic",
+  "formationk.setting.category.visual": "Visual",
+  "formationk.setting.category.ui": "Interface",
+  "formationk.setting.category.camera": "Camera",
+
+  "formationk.option.steer_boost.off": "Steer Boost: OFF",
+  "formationk.option.steer_boost.extreme": "Steer Boost: Extreme!",
+  "formationk.tooltip.steer_boost": "Optimize the rotation of karts when riding a kart.",
+
+  "formationk.option.packet_boost.off": "Packet Boost: OFF",
+  "formationk.option.packet_boost.on": "Packet Boost: ON",
+  "formationk.tooltip.packet_boost": "Accelerate packets when riding a kart.",
+
+  "formationk.option.enemy_radar.off": "Enemy Radar: OFF",
+  "formationk.option.enemy_radar.on": "Enemy Radar: ON",
+  "formationk.tooltip.enemy_radar": "Show enemy direction arrows when riding a kart.",
+
+  "formationk.option.overtake_gauge.off": "Overtake gauge: OFF",
+  "formationk.option.overtake_gauge.on": "Overtake gauge: ON",
+  "formationk.tooltip.overtake_gauge": "Show an overtake gauge when riding a kart.",
+
+  "formationk.option.auto_third_person.off": "Auto third person: OFF",
+  "formationk.option.auto_third_person.on": "Auto third person: ON",
+  "formationk.tooltip.auto_third_person": "Automatically change to 3rd person view when riding a kart.",
+
+  "formationk.option.noclip_camera.off": "Noclip camera: OFF",
+  "formationk.option.noclip_camera.on": "Noclip camera: ON",
+  "formationk.tooltip.noclip_camera": "Third person camera goes through blocks when riding a kart.",
+
+  "formationk.option.camera_mode.default": "Camera mode: Default[1]",
+  "formationk.option.camera_mode.balance": "Camera mode: Balance[2]",
+  "formationk.option.camera_mode.normal": "Camera mode: Normal[3]",
+  "formationk.option.camera_mode.emphasis": "Camera mode: Emphasis[4]",
+  "formationk.tooltip.camera_mode": "Change camera mode when riding a kart.",
+
+  "formationk.option.spectator_camera.off": "Spectator Camera: OFF",
+  "formationk.option.spectator_camera.formationk": "Spectator Camera: Formation K",
+  "formationk.tooltip.spectator_camera": "Change the camera behavior when spectating another racer.",
+
+  "formationk.option.suspension_effect.off": "Suspension Effect: OFF",
+  "formationk.option.suspension_effect.kart": "Suspension Effect: Body",
+  "formationk.option.suspension_effect.kart_and_camera": "Suspension Effect: Body and Camera",
+  "formationk.tooltip.suspension_effect": "Change suspension effect when riding a kart.",
+
+  "formationk.option.player_body_lock.off": "Player Body Lock: OFF",
+  "formationk.option.player_body_lock.on": "Player Body Lock: ON",
+  "formationk.tooltip.player_body_lock": "Align the player's body with the kart for a cleaner look.",
+  "formationk.option.player_head_lock.off": "Player Head Lock: OFF",
+  "formationk.option.player_head_lock.on": "Player Head Lock: ON",
+  "formationk.tooltip.player_head_lock": "Make the player's head follow the camera directly when riding a kart.",
+  "formationk.option.smooth_engine_sound.off": "Smooth Engine Sound: OFF",
+  "formationk.option.smooth_engine_sound.on": "Smooth Engine Sound: ON",
+  "formationk.tooltip.smooth_engine_sound": "Play sounds like versions below 26.1 for smoother engine sounds when riding a kart.",
+
+  "formationk.option.bike_suspension.default": "Bike Suspension: Default",
+  "formationk.option.bike_suspension.four_wheel": "Bike Suspension: 4-Wheel",
+  "formationk.option.bike_suspension.realistic": "Bike Suspension: Realistic",
+  "formationk.option.bike_suspension.extreme": "Bike Suspension: Extreme!",
+  "formationk.tooltip.bike_suspension": "Change bike suspension effect when enable suspension effect.",
+
+  "formationk.option.auto_save_delay.off": "Autosave Delay: OFF",
+  "formationk.option.auto_save_delay.on": "Autosave Delay: ON",
+  "formationk.tooltip.auto_save_delay": "Delay the autosave during a singleplayer race to avoid lag.",
+
+  "formationk.option.track_minimap.off": "Track Minimap: OFF",
+  "formationk.option.track_minimap.bottom_left": "Track Minimap: Bottom Left",
+  "formationk.option.track_minimap.bottom_right": "Track Minimap: Bottom Right",
+  "formationk.option.track_minimap.left_middle": "Track Minimap: Left Middle",
+  "formationk.option.track_minimap.right_middle": "Track Minimap: Right Middle",
+  "formationk.option.track_minimap.top_left": "Track Minimap: Top Left",
+  "formationk.option.track_minimap.top_right": "Track Minimap: Top Right",
+  "formationk.option.track_minimap.debug": "Track Minimap: DEBUG",
+  "formationk.tooltip.track_minimap": "Automatically search the track and display a minimap with racer positions when riding a kart.",
+
+  "formationk.slider.riding_fov": "Riding FOV",
+  "formationk.slider.riding_fov.tooltip": "This option only works in camera mode 'default'.",
+  "formationk.slider.riding_fov_effects": "Riding FOV Effects",
+  "formationk.slider.riding_fov_effects.tooltip": "This option only works in camera mode 'default'."
+}

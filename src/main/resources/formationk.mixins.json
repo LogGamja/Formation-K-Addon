@@ -1,0 +1,28 @@
+{
+  "required": true,
+  "package": "loggamja.formationk.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "server.MinecraftServerMixin"
+  ],
+  "client": [
+    "CameraMixin",
+    "CameraFovMixin",
+    "ClientPlayNetworkHandlerMixin",
+    "GameMenuScreenMixin",
+    "GameRendererMixin",
+    "LivingEntityRendererMixin",
+    "DisplayEntityRendererMixin",
+    "DisplayEntityRenderStateMixin",
+    "LivingEntityRenderStateMixin",
+    "ChannelMixin",
+    "SoundManagerAccessor",
+    "SoundEngineAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  }
+}
