@@ -25,7 +25,6 @@ public class CameraMixin {
 
     @Shadow private Quaternionf rotation; // final 이라도 객체 자체는 변경 가능
     @Shadow private Entity entity;
-    @Shadow private boolean detached;
 
     // 카메라 롤 지수 평활(EMA) 상태
     @Unique private long formationk$lastTime = 0L;
@@ -105,7 +104,7 @@ public class CameraMixin {
     // 앵커 위치는 setRotation 안에서 이미 계산된 방향 벡터로 정해지므로 화면 방향만 바뀐다.
     @Unique
     private void formationk$applyObserverPitchOffset() {
-        if (!this.detached || Minecraft.getInstance().options.getCameraType().isMirrored()) return;
+        if (Minecraft.getInstance().options.getCameraType() != CameraType.THIRD_PERSON_BACK) return;
 
         float pitchOffset = ObserverCamera.getLocalPitchOffset();
         if (pitchOffset == 0f) return;

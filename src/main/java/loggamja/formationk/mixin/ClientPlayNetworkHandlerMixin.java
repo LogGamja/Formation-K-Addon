@@ -32,7 +32,7 @@ public class ClientPlayNetworkHandlerMixin {
         boolean matched = !Float.isNaN(speed);
 
         if (matched && Main.kartEngine == 3) {
-            speed *= 2.59065f;
+            speed *= 1.295325f;
         }
 
         var world = Minecraft.getInstance().level;
