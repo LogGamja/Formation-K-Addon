@@ -71,7 +71,7 @@ public class Main implements ClientModInitializer {
         updateRidingState(isRidingNow);
 
         boolean isSampleSucceeded = false;
-        if (Config.INSTANCE.RotationOption > 0) {
+        if (Config.INSTANCE.RotationOption > 0 && kartEngine != 1002) {
             if (isCameraPlayerRidingKart && getCameraPlayer() == client.player) {
                 Entity kartMobil = getCameraPlayer().getRootVehicle();
 
@@ -187,15 +187,13 @@ public class Main implements ClientModInitializer {
         if (Config.INSTANCE.RotationOption > 0 && player == client.player) {
             Entity kartMobil = player.getRootVehicle();
 
-            if (kartMobil != player && getAllowModelRotation(player)) {
+            if (kartMobil != player && getAllowModelRotation(player) && hasDirectionYawSamples) {
                 List<Entity> passengers = kartMobil.getPassengers();
                 for (var i : passengers) {
                     if (!hasCertainName(i, "formationk-direction")) continue;
 
                     // directionYaw는 직전 틱 값과 보간해야 함
-                    float directionYaw = hasDirectionYawSamples
-                            ? Mth.rotLerp(partialTick, prevTickDirectionYaw, tickDirectionYaw)
-                            : i.getYRot();
+                    float directionYaw = Mth.rotLerp(partialTick, prevTickDirectionYaw, tickDirectionYaw);
 
                     float rotation = calculateRotation(directionYaw);
                     for (var j : passengers) {
@@ -235,16 +233,7 @@ public class Main implements ClientModInitializer {
     static float calculateRotation(float directionYaw) {
         float playerYaw = getCameraPlayer().getYRot();
 
-        if (kartEngine == 1002) {
-            int driftState = Main.getS2CValue(Main.getCameraPlayer(), "state-drift");
-            if (driftState == 1) {
-                return Mth.wrapDegrees(playerYaw);
-            }
-            else {
-                return Mth.wrapDegrees(directionYaw);
-            }
-        }
-        else if (kartEngine == 1003) {
+        if (kartEngine == 1003) {
             return Mth.wrapDegrees(playerYaw);
         }
 

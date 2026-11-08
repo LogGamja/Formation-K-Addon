@@ -8,11 +8,9 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.util.Mth;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,13 +23,7 @@ public class Suspension implements ClientModInitializer {
     private static final double FREQ  = 1.66; // 공진주파수 (Hz)
     private static final double Q     = 1;    // 공진 팩터
 
-    private static final int DRIFT_START_TICKS = 10;
-
     private static final class SuspensionState {
-        final List<Float> steerGradientBuffer = new ArrayList<>();
-        float prevPlayerYaw = 0f;
-        boolean isDrifting = false;
-        int driftJustStartedTicks = 0;
         final SpringSimulator.SpringState spring = new SpringSimulator.SpringState();
         long lastSeenTick = 0L;
     }
@@ -76,11 +68,7 @@ public class Suspension implements ClientModInitializer {
                 continue;
             }
 
-            SuspensionState st = states.computeIfAbsent(player.getUUID(), k -> {
-                SuspensionState s = new SuspensionState();
-                s.prevPlayerYaw = player.getYRot(); // 재진입 시 가짜 steerGradient 스파이크 방지
-                return s;
-            });
+            SuspensionState st = states.computeIfAbsent(player.getUUID(), k -> new SuspensionState());
             st.lastSeenTick = tickCounter;
             processPlayer(player, st);
             processed++;
@@ -105,24 +93,6 @@ public class Suspension implements ClientModInitializer {
 
         int isBike = Main.getS2CValue(player, "data-is-bike");
         boolean isModelRotateAllowed = Main.getAllowModelRotation(player);
-
-        float playerYaw = player.getYRot();
-
-        float wrappedDegree = Math.abs(Mth.wrapDegrees(st.prevPlayerYaw - playerYaw));
-        st.steerGradientBuffer.add(wrappedDegree);
-        if (st.steerGradientBuffer.size() > 5) st.steerGradientBuffer.removeFirst();
-        st.prevPlayerYaw = playerYaw;
-
-        if (st.driftJustStartedTicks > 0) st.driftJustStartedTicks--;
-
-        boolean isDriftingTemp = detectDriftState(kart);
-        if (isDriftingTemp != st.isDrifting) {
-            st.isDrifting = isDriftingTemp;
-
-            if (st.isDrifting) {
-                st.driftJustStartedTicks = DRIFT_START_TICKS;
-            }
-        }
 
         float moveDirection = 0f;
         float steerDirection = 0f;
@@ -173,21 +143,6 @@ public class Suspension implements ClientModInitializer {
         EntityRollManager.setRoll(player.getUUID(), roll, 1);
     }
 
-    static boolean detectDriftState(Entity kart) {
-        if (kart instanceof Player) return false;
-
-        List<Entity> passengers = kart.getPassengers();
-        for (var i : passengers) {
-            if (!Main.hasCertainName(i, "formationk-modelsaddle")) continue;
-
-            for (var j : i.getPassengers()) {
-                if (!Main.hasCertainName(j, "formationk-drift-effect") || !(j instanceof Display display)) continue;
-
-                return display.getViewRange() > 0;
-            }
-        }
-        return false;
-    }
     public static void clearStates() {
         states.clear();
     }
