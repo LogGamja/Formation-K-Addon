@@ -137,11 +137,19 @@ public class Main implements ClientModInitializer {
     }
     void updateRidingState(boolean isRidingNow) {
         if (isRidingNow != isCameraPlayerRidingKart) {
+            boolean wasRiding = isCameraPlayerRidingKart;
             isCameraPlayerRidingKart = isRidingNow;
 
             Camera.lastPos = null;
             hasDirectionYawSamples = false;
+            // clearAllMap()이 방문 기록을 지우기 전에 세션 종료 export를 먼저 해야 한다.
+            if (wasRiding) {
+                Minimap.exportSessionEnd();
+            }
             Minimap.clearAllMap();
+            if (!wasRiding) {
+                Minimap.exportSessionStart();
+            }
             Overtake.resetGauge();
             autoThirdPerson();
         }
