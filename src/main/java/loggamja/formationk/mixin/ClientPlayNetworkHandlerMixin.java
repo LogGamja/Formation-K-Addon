@@ -31,10 +31,6 @@ public class ClientPlayNetworkHandlerMixin {
         var speed = formationk$extractSpeed(message.getString());
         boolean matched = !Float.isNaN(speed);
 
-        if (matched && Main.kartEngine == 3) {
-            speed *= 1.295325f;
-        }
-
         var world = Minecraft.getInstance().level;
         long worldTime = (world != null) ? world.getGameTime() : formationk$lastSpeedSuccessTime;
 

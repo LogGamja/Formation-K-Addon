@@ -81,7 +81,7 @@ public final class OptionTable {
             ),
             new ToggleDef(
                     "spectator_camera", Category.CAMERA,
-                    new String[]{"formationk.option.spectator_camera.off", "formationk.option.spectator_camera.formationk"},
+                    new String[]{"formationk.option.spectator_camera.default", "formationk.option.spectator_camera.far"},
                     "formationk.tooltip.spectator_camera",
                     () -> Config.INSTANCE.spectatorCameraMode,
                     v -> Config.INSTANCE.spectatorCameraMode = v

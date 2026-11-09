@@ -38,8 +38,8 @@
   "formationk.option.camera_mode.emphasis": "카메라 모드: 강조[4]",
   "formationk.tooltip.camera_mode": "카트 탑승 시 카메라 연출 방식을 선택할 수 있습니다.",
 
-  "formationk.option.spectator_camera.off": "관전 카메라: 꺼짐",
-  "formationk.option.spectator_camera.formationk": "관전 카메라: Formation K",
+  "formationk.option.spectator_camera.default": "관전 카메라: 기본",
+  "formationk.option.spectator_camera.far": "관전 카메라: 원거리",
   "formationk.tooltip.spectator_camera": "다른 레이서를 관전할 때 카메라 연출 방식을 선택합니다.",
 
   "formationk.option.suspension_effect.off": "서스펜션 효과: 꺼짐",

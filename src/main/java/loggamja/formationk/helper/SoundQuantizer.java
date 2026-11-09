@@ -54,7 +54,7 @@ public final class SoundQuantizer {
 
         try {
             TIMER.schedule(() -> {
-                while (System.nanoTime() < target) {
+                while (System.nanoTime() - target < 0) {
                     Thread.onSpinWait();
                 }
                 soundExecutor.execute(() -> {

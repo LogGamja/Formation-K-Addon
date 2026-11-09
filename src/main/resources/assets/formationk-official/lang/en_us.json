@@ -38,8 +38,8 @@
   "formationk.option.camera_mode.emphasis": "Camera mode: Emphasis[4]",
   "formationk.tooltip.camera_mode": "Change camera mode when riding a kart.",
 
-  "formationk.option.spectator_camera.off": "Spectator Camera: OFF",
-  "formationk.option.spectator_camera.formationk": "Spectator Camera: Formation K",
+  "formationk.option.spectator_camera.default": "Spectator Camera: Default",
+  "formationk.option.spectator_camera.far": "Spectator Camera: Far",
   "formationk.tooltip.spectator_camera": "Change the camera behavior when spectating another racer.",
 
   "formationk.option.suspension_effect.off": "Suspension Effect: OFF",
