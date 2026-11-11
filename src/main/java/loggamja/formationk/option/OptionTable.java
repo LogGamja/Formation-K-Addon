@@ -122,6 +122,13 @@ public final class OptionTable {
                     v -> Config.INSTANCE.smoothEngineSound = v != 0
             ),
             new ToggleDef(
+                    "teleport_bug_fix", Category.BASIC,
+                    new String[]{"formationk.option.teleport_bug_fix.off", "formationk.option.teleport_bug_fix.on"},
+                    "formationk.tooltip.teleport_bug_fix",
+                    () -> Config.INSTANCE.teleportBugFix ? 1 : 0,
+                    v -> Config.INSTANCE.teleportBugFix = v != 0
+            ),
+            new ToggleDef(
                     "auto_save_delay", Category.BASIC,
                     new String[]{"formationk.option.auto_save_delay.off", "formationk.option.auto_save_delay.on"},
                     "formationk.tooltip.auto_save_delay",

@@ -38,6 +38,7 @@ public class Config {
     public boolean playerBodyLock = true;
     public boolean playerHeadLock = false;
     public boolean smoothEngineSound = true;
+    public boolean teleportBugFix = true;
 
     public int FOV = 90;
     public int FOVEffects = 80;

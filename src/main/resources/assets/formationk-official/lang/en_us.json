@@ -62,6 +62,9 @@
   "formationk.option.bike_suspension.extreme": "Bike Suspension: Extreme!",
   "formationk.tooltip.bike_suspension": "Change bike suspension effect when enable suspension effect.",
 
+  "formationk.option.teleport_bug_fix.off": "Teleport Bug Fix: OFF",
+  "formationk.option.teleport_bug_fix.on": "Teleport Bug Fix: ON",
+  "formationk.tooltip.teleport_bug_fix": "Fixes a bug where model entities riding a kart are not updated correctly when teleporting.",
   "formationk.option.auto_save_delay.off": "Autosave Delay: OFF",
   "formationk.option.auto_save_delay.on": "Autosave Delay: ON",
   "formationk.tooltip.auto_save_delay": "Delay the autosave during a singleplayer race to avoid lag.",

@@ -233,10 +233,6 @@ public class Main implements ClientModInitializer {
     static float calculateRotation(float directionYaw) {
         float playerYaw = getCameraPlayer().getYRot();
 
-        if (kartEngine == 1003) {
-            return Mth.wrapDegrees(playerYaw);
-        }
-
         var deltaAngle = Mth.wrapDegrees(playerYaw - directionYaw);
         var overShootAngle = getOverShootAngle(deltaAngle);
 

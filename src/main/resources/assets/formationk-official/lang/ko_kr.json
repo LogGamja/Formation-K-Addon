@@ -62,6 +62,9 @@
   "formationk.option.bike_suspension.extreme": "바이크 서스펜션: 익스트림",
   "formationk.tooltip.bike_suspension": "서스펜션 효과 활성화 시 바이크의 서스펜션 연출을 변경합니다.",
 
+  "formationk.option.teleport_bug_fix.off": "순간이동 버그 수정: 꺼짐",
+  "formationk.option.teleport_bug_fix.on": "순간이동 버그 수정: 켜짐",
+  "formationk.tooltip.teleport_bug_fix": "순간이동할 때 카트에 탄 모델 엔티티가 제대로 갱신되지 않는 버그를 수정합니다.",
   "formationk.option.auto_save_delay.off": "자동 저장 지연: 꺼짐",
   "formationk.option.auto_save_delay.on": "자동 저장 지연: 켜짐",
   "formationk.tooltip.auto_save_delay": "싱글플레이 레이스 중 월드 자동 저장을 미뤄 렉을 줄입니다.",
