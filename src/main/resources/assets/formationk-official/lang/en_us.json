@@ -57,6 +57,11 @@
   "formationk.option.smooth_engine_sound.on": "Smooth Engine Sound: ON",
   "formationk.tooltip.smooth_engine_sound": "Play sounds like versions below 26.1 for smoother engine sounds when riding a kart.",
 
+  "formationk.option.wheel_effect.off": "Wheel Effect: OFF",
+  "formationk.option.wheel_effect.roll": "Wheel Effect: Roll",
+  "formationk.option.wheel_effect.roll_steer": "Wheel Effect: Roll and Steer",
+  "formationk.tooltip.wheel_effect": "Wheel models roll with speed, and steering wheels turn toward the direction of travel.",
+
   "formationk.option.bike_suspension.default": "Bike Suspension: Default",
   "formationk.option.bike_suspension.four_wheel": "Bike Suspension: 4-Wheel",
   "formationk.option.bike_suspension.extreme": "Bike Suspension: Extreme!",

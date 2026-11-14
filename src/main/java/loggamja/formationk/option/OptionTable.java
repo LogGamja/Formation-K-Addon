@@ -94,6 +94,13 @@ public final class OptionTable {
                     v -> Config.INSTANCE.suspensionEffect = v
             ),
             new ToggleDef(
+                    "wheel_effect", Category.VISUAL,
+                    new String[]{"formationk.option.wheel_effect.off", "formationk.option.wheel_effect.roll", "formationk.option.wheel_effect.roll_steer"},
+                    "formationk.tooltip.wheel_effect",
+                    () -> Config.INSTANCE.wheelEffect,
+                    v -> Config.INSTANCE.wheelEffect = v
+            ),
+            new ToggleDef(
                     "bike_suspension", Category.VISUAL,
                     new String[]{"formationk.option.bike_suspension.default", "formationk.option.bike_suspension.four_wheel", "formationk.option.bike_suspension.extreme"},
                     "formationk.tooltip.bike_suspension",

@@ -25,7 +25,8 @@
           "loggamja.formationk.Overtake",
           "loggamja.formationk.Camera",
           "loggamja.formationk.ObserverCamera",
-          "loggamja.formationk.Suspension"
+          "loggamja.formationk.Suspension",
+          "loggamja.formationk.Wheel"
 		]
 	},
 	"mixins": [

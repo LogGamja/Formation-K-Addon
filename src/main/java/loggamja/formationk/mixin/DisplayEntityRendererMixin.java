@@ -3,6 +3,7 @@ package loggamja.formationk.mixin;
 
 import loggamja.formationk.Suspension;
 import loggamja.formationk.helper.EntityRollManager;
+import loggamja.formationk.helper.WheelManager;
 import loggamja.formationk.interfaces.DisplayEntityRenderStateAccessor;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
@@ -49,27 +50,37 @@ public class DisplayEntityRendererMixin {
     ) {
         if (state.renderState == null) return;
 
-        UUID uuid = ((DisplayEntityRenderStateAccessor) state).formationk$getUuid();
+        DisplayEntityRenderStateAccessor acc = (DisplayEntityRenderStateAccessor) state;
+        UUID uuid = acc.formationk$getUuid();
         if (uuid == null) return;
 
         float rollDeg = EntityRollManager.getCurrentRoll(uuid);
-        if (rollDeg == 0f) return;
-
-        double pivotY = ((DisplayEntityRenderStateAccessor) state).formationk$getPivotY();
+        WheelManager.WheelPartInfo wheel = acc.formationk$getWheel();
+        if (rollDeg == 0f && wheel == null) return;
 
         Transformation affine = state.renderState.transformation().get(state.interpolationProgress);
         formationk$scratchOriginal.set(affine.getMatrix());
-        
+
         // 작은 디스플레이 검사하지 않음
         if (Math.abs(formationk$scratchOriginal.determinant()) < formationk$MIN_DETERMINANT) return;
-        
-        formationk$scratchInverse.set(formationk$scratchOriginal).invert();
-        formationk$scratchRoll.rotationZ((float) Math.toRadians(rollDeg));
 
+        formationk$scratchInverse.set(formationk$scratchOriginal).invert();
         matrices.mulPose(formationk$scratchInverse);
-        matrices.translate(0.0f, (float) -pivotY, 0.0f);
-        matrices.mulPose(formationk$scratchRoll);
-        matrices.translate(0.0f, (float) pivotY, 0.0f);
+
+        if (rollDeg != 0f) {
+            double pivotY = acc.formationk$getPivotY();
+            formationk$scratchRoll.rotationZ((float) Math.toRadians(rollDeg));
+
+            matrices.translate(0.0f, (float) -pivotY, 0.0f);
+            matrices.mulPose(formationk$scratchRoll);
+            matrices.translate(0.0f, (float) pivotY, 0.0f);
+        }
+
+        // 서스펜션 롤 안에서 돌도록 반드시 롤 적용 뒤에 호출
+        if (wheel != null) {
+            WheelManager.apply(state, wheel, matrices, formationk$scratchOriginal);
+        }
+
         matrices.mulPose(formationk$scratchOriginal);
     }
     @Inject(
@@ -79,6 +90,7 @@ public class DisplayEntityRendererMixin {
     private void formationk$captureUuid(Display entity, DisplayEntityRenderState state, float tickDelta, CallbackInfo ci) {
         DisplayEntityRenderStateAccessor accessor = (DisplayEntityRenderStateAccessor) state;
         accessor.formationk$setUuid(entity.getUUID());
+        accessor.formationk$setWheel(WheelManager.capture(entity));
 
         if (entity.isPassenger()) {
             double pivotY = entity.getY() - entity.getRootVehicle().getY() - Suspension.pivotYOffset;

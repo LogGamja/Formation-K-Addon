@@ -57,6 +57,11 @@
   "formationk.option.smooth_engine_sound.on": "부드러운 엔진음: 켜짐",
   "formationk.tooltip.smooth_engine_sound": "카트 탑승 시 26.1보다 낮은 버전의 소리 재생으로 엔진음을 부드럽게 합니다.",
 
+  "formationk.option.wheel_effect.off": "바퀴 효과: 꺼짐",
+  "formationk.option.wheel_effect.roll": "바퀴 효과: 회전",
+  "formationk.option.wheel_effect.roll_steer": "바퀴 효과: 회전과 조향",
+  "formationk.tooltip.wheel_effect": "바퀴 모델이 속도에 맞춰 구르고, 조향 바퀴는 방향을 꺾습니다.",
+
   "formationk.option.bike_suspension.default": "바이크 서스펜션: 기본",
   "formationk.option.bike_suspension.four_wheel": "바이크 서스펜션: 4륜 카트",
   "formationk.option.bike_suspension.extreme": "바이크 서스펜션: 익스트림",

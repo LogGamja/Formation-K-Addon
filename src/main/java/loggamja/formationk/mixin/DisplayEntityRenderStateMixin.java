@@ -6,6 +6,8 @@ import net.minecraft.client.renderer.entity.state.DisplayEntityRenderState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
+import loggamja.formationk.helper.WheelManager;
+
 import java.util.UUID;
 
 // 부모 클래스 믹스인으로 모든 디스플레이 타입 커버
@@ -28,4 +30,13 @@ public class DisplayEntityRenderStateMixin implements DisplayEntityRenderStateAc
 
     @Override
     public void formationk$setPivotY(double pivotY) { this.formationk$pivotY = pivotY; }
+
+    @Unique
+    private WheelManager.WheelPartInfo formationk$wheel;
+
+    @Override
+    public WheelManager.WheelPartInfo formationk$getWheel() { return formationk$wheel; }
+
+    @Override
+    public void formationk$setWheel(WheelManager.WheelPartInfo info) { this.formationk$wheel = info; }
 }

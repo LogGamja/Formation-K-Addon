@@ -15,6 +15,7 @@
     "LivingEntityRendererMixin",
     "DisplayEntityRendererMixin",
     "DisplayEntityRenderStateMixin",
+    "BlockModelRenderStateAccessor",
     "LivingEntityRenderStateMixin",
     "ChannelMixin",
     "SoundManagerAccessor",

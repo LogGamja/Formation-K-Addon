@@ -34,6 +34,7 @@ public class Config {
     public int spectatorCameraMode = 0;
 
     public int suspensionEffect = 0;
+    public int wheelEffect = 0;
     public int bikeSuspension = 0;
     public boolean playerBodyLock = true;
     public boolean playerHeadLock = false;
