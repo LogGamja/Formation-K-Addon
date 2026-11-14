@@ -38,6 +38,7 @@ public class RidingCamera implements ClientModInitializer {
     private static final float MIN_MOVE_FOR_DIRECTION = 0.0001f;
     public static float actionbarSpeed = 0f;
     public static int timeAfterLastActionbar = 0;
+    public static final int ACTIONBAR_FRESH_TICKS = 20;
 
     @Override
     public void onInitializeClient() {
@@ -49,8 +50,9 @@ public class RidingCamera implements ClientModInitializer {
     void onClientTickStart() {
         if (!Main.isPlayingInGame() || !Main.isCameraPlayerRidingKart) return;
 
-        // 카트의 틱당 위치 차분(realSpeed/realDirection)은 카메라 연출 옵션(cameraMode)과 무관하게 항상 갱신되어야 함
+        // 카메라와 무관한 연산
         calculateSpeed();
+        timeAfterLastActionbar++;
 
         if (Config.INSTANCE.cameraMode == 0) return;
 
@@ -86,8 +88,7 @@ public class RidingCamera implements ClientModInitializer {
         final double ARM_SPEED_FORWARD = 0.08 * armSpeedMultiplier;
         final double ARM_SPEED_BACKWARD = 4 * armSpeedMultiplier;
 
-        timeAfterLastActionbar++;
-        float speed = (timeAfterLastActionbar > 20) ? realSpeed : actionbarSpeed;
+        float speed = isActionbarSpeedFresh() ? actionbarSpeed : realSpeed;
         if (realSpeed > speed) speed++;
 
         final double convertedSpeed = speed * 24.83;
@@ -104,6 +105,10 @@ public class RidingCamera implements ClientModInitializer {
 
         //System.out.println(linearMap(cameraDistanceOffset, BASE_DISTANCE, 815, 600, 815));
     }
+    public static boolean isActionbarSpeedFresh() {
+        return timeAfterLastActionbar <= ACTIONBAR_FRESH_TICKS;
+    }
+
     void calculateSpeed() {
         Vec3 cur = Main.getCameraPlayer().getEyePosition(1);
 

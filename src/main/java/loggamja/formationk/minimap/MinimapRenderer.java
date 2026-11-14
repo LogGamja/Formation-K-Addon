@@ -700,7 +700,7 @@ final class MinimapRenderer {
         try {
             matrices.translate(cx, cy);
             matrices.rotate((float) Math.toRadians(rotationDeg));
-            matrices.translate(-size / 2f, -size / 2f);
+            matrices.translate(-isize / 2f, -isize / 2f);
 
             matrices.pushMatrix();
             try {
@@ -727,7 +727,7 @@ final class MinimapRenderer {
         try {
             matrices.translate(cx, cy);
             matrices.rotate((float) Math.toRadians(rotationDeg));
-            matrices.translate(-size / 2f, -size / 2f);
+            matrices.translate(-isize / 2f, -isize / 2f);
 
             matrices.pushMatrix();
             try {

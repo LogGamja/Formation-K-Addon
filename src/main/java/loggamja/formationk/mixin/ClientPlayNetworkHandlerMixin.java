@@ -39,7 +39,7 @@ public class ClientPlayNetworkHandlerMixin {
             RidingCamera.timeAfterLastActionbar = 0;
             formationk$lastSpeedSuccessTime = worldTime;
         } else if (worldTime != formationk$lastSpeedSuccessTime) {
-            RidingCamera.timeAfterLastActionbar = 20;
+            RidingCamera.timeAfterLastActionbar = RidingCamera.ACTIONBAR_FRESH_TICKS + 1;
         }
     }
     @Unique
