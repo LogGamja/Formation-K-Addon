@@ -1,6 +1,7 @@
 package loggamja.formationk.mixin;
 
 import loggamja.formationk.ObserverCamera;
+import loggamja.formationk.RidingCamera;
 import loggamja.formationk.option.Config;
 import loggamja.formationk.Main;
 import loggamja.formationk.helper.EntityRollManager;
@@ -45,11 +46,11 @@ public class CameraMixin {
     // 기본 카메라이면 null을 반환해 vanilla 거리를 그대로 사용
     @Unique
     private static Float formationk$computeCustomDistance(float f) {
-        var newDistance = loggamja.formationk.Camera.getCameraDistanceOffset(f);
+        var newDistance = RidingCamera.getCameraDistanceOffset(f);
         if (newDistance == f) return null;
 
         var delta = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
-        var newDistanceAtPrevTick = loggamja.formationk.Camera.getCameraDistanceOffsetAtPrevTick(f);
+        var newDistanceAtPrevTick = RidingCamera.getCameraDistanceOffsetAtPrevTick(f);
         return Mth.lerp(delta, newDistanceAtPrevTick, newDistance);
     }
     // 카메라 모드에 무관하게 노클립

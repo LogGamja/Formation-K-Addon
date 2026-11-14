@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class Camera implements ClientModInitializer {
+public class RidingCamera implements ClientModInitializer {
     static Minecraft client = Minecraft.getInstance();
 
     public static List<Float> targetFovBuffer = new ArrayList<>(Collections.nCopies(1, 0f));

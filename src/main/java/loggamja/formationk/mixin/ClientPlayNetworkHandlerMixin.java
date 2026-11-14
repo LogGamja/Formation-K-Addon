@@ -1,6 +1,6 @@
 package loggamja.formationk.mixin;
 
-import loggamja.formationk.Camera;
+import loggamja.formationk.RidingCamera;
 import loggamja.formationk.Main;
 
 import net.minecraft.client.Minecraft;
@@ -35,11 +35,11 @@ public class ClientPlayNetworkHandlerMixin {
         long worldTime = (world != null) ? world.getGameTime() : formationk$lastSpeedSuccessTime;
 
         if (matched) {
-            Camera.actionbarSpeed = speed;
-            Camera.timeAfterLastActionbar = 0;
+            RidingCamera.actionbarSpeed = speed;
+            RidingCamera.timeAfterLastActionbar = 0;
             formationk$lastSpeedSuccessTime = worldTime;
         } else if (worldTime != formationk$lastSpeedSuccessTime) {
-            Camera.timeAfterLastActionbar = 20;
+            RidingCamera.timeAfterLastActionbar = 20;
         }
     }
     @Unique

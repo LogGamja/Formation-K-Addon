@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.state.DisplayEntityRenderState;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Display;
+import net.minecraft.world.level.block.state.BlockState;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -24,7 +25,7 @@ public class WheelManager {
     private static final int CACHE_KEEP_TICKS = 200;
 
     public record WheelKey(UUID kartId, int wheelId) {}
-    public record WheelPartInfo(WheelKey wheelKey, boolean canSteer, UUID partId) {}
+    public record WheelPartInfo(WheelKey wheelKey, boolean canSteer, UUID partId, BlockState blockState) {}
 
     private record WheelMotion(float rotateDist, float prevRotateDist, float steerAngle, float prevSteerAngle, long updatedTick) {}
     private record WheelPivot(Vector3f center, float radius, long measuredTick) {}
@@ -63,7 +64,9 @@ public class WheelManager {
         var wheelKey = new WheelKey(entity.getRootVehicle().getUUID(), wheelId);
         boolean canSteer = isSteerPart && Config.INSTANCE.wheelEffect >= 2;
 
-        return new WheelPartInfo(wheelKey, canSteer, entity.getUUID());
+        BlockState blockState = entity instanceof Display.BlockDisplay blockDisplay && blockDisplay.blockRenderState() != null ? blockDisplay.blockRenderState().blockState() : null;
+
+        return new WheelPartInfo(wheelKey, canSteer, entity.getUUID(), blockState);
     }
 
     public static void update(UUID kartId, float speedMetersPerSecond, float targetSteerAngle) {
@@ -106,7 +109,7 @@ public class WheelManager {
         wheelPart.displayTransform.set(displayTransform);
 
         if (now() - wheelPart.pointsCollectedTick >= POINTS_REFRESH_TICKS) {
-            wheelPart.modelPoints = WheelMeasurer.collectPoints(renderState);
+            wheelPart.modelPoints = WheelMeasurer.collectPoints(renderState, partInfo.blockState());
             wheelPart.pointsCollectedTick = now();
         }
 

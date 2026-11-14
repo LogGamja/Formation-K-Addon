@@ -1,16 +1,18 @@
 package loggamja.formationk.helper;
 
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
-import loggamja.formationk.mixin.BlockModelRenderStateAccessor;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
-import net.minecraft.client.renderer.entity.state.BlockDisplayEntityRenderState;
 import net.minecraft.client.renderer.entity.state.DisplayEntityRenderState;
 import net.minecraft.client.renderer.entity.state.ItemDisplayEntityRenderState;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.block.state.BlockState;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
+import java.util.ArrayList;
 import java.util.List;
 
 // 바퀴를 이루는 파츠들의 정점으로 질량 중심과 반지름 측정
@@ -65,19 +67,20 @@ public class WheelMeasurer {
         }
     }
 
-    public static float[] collectPoints(DisplayEntityRenderState state) {
+    public static float[] collectPoints(DisplayEntityRenderState renderState, BlockState blockState) {
         var modelPointsOut = new FloatArrayList();
 
-        if (state instanceof BlockDisplayEntityRenderState block) {
-            List<BlockStateModelPart> modelParts = ((BlockModelRenderStateAccessor) block.blockModel).formationk$getModelParts();
-            if (modelParts == null) return modelPointsOut.toFloatArray();
+        if (blockState != null) {
+            var modelParts = new ArrayList<BlockStateModelPart>();
+            Minecraft.getInstance().getModelManager().getBlockStateModelSet().get(blockState).collectParts(RandomSource.create(0L), modelParts);
 
             for (var part : modelParts) {
                 addQuads(modelPointsOut, part.getQuads(null));
                 for (var direction : Direction.values()) addQuads(modelPointsOut, part.getQuads(direction));
             }
+            if (modelPointsOut.isEmpty()) addUnitCube(modelPointsOut);
         }
-        else if (state instanceof ItemDisplayEntityRenderState item && !item.item.isEmpty()) {
+        else if (renderState instanceof ItemDisplayEntityRenderState item && !item.item.isEmpty()) {
             // 아이템 디스플레이는 변환 행렬 뒤에 Y축 180도 회전이 한 번 더 걸린다
             item.item.visitExtents(v -> {
                 modelPointsOut.add(-v.x());
@@ -90,8 +93,6 @@ public class WheelMeasurer {
     }
 
     private static void addQuads(FloatArrayList modelPointsOut, List<BakedQuad> quads) {
-        if (quads == null) return;
-
         for (var quad : quads) {
             for (int i = 0; i < BakedQuad.VERTEX_COUNT; i++) {
                 var position = quad.position(i);
@@ -99,6 +100,15 @@ public class WheelMeasurer {
                 modelPointsOut.add(position.y());
                 modelPointsOut.add(position.z());
             }
+        }
+    }
+
+    // 모델이 없는 블록은 꽉 찬 블록으로 본다
+    private static void addUnitCube(FloatArrayList modelPointsOut) {
+        for (int corner = 0; corner < 8; corner++) {
+            modelPointsOut.add(corner & 1);
+            modelPointsOut.add((corner >> 1) & 1);
+            modelPointsOut.add((corner >> 2) & 1);
         }
     }
 }

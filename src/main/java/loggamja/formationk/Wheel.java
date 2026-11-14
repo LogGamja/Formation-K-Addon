@@ -55,8 +55,8 @@ public class Wheel implements ClientModInitializer {
         float positionSpeed = (float) Math.hypot(kartDeltaX, kartDeltaZ) * 20f;
 
         float speedMetersPerSecond = positionSpeed;
-        if (player == Main.getCameraPlayer() && Camera.timeAfterLastActionbar <= 20) {
-            speedMetersPerSecond = Camera.actionbarSpeed / 3.6f;
+        if (player == Main.getCameraPlayer() && RidingCamera.timeAfterLastActionbar <= 20) {
+            speedMetersPerSecond = RidingCamera.actionbarSpeed / 3.6f;
         }
 
         float targetSteerAngle = 0f;

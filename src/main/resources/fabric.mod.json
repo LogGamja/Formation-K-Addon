@@ -23,7 +23,7 @@
           "loggamja.formationk.minimap.Minimap",
           "loggamja.formationk.Radar",
           "loggamja.formationk.Overtake",
-          "loggamja.formationk.Camera",
+          "loggamja.formationk.RidingCamera",
           "loggamja.formationk.ObserverCamera",
           "loggamja.formationk.Suspension",
           "loggamja.formationk.Wheel"

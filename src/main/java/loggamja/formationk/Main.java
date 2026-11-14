@@ -139,7 +139,7 @@ public class Main implements ClientModInitializer {
         if (isRidingNow != isCameraPlayerRidingKart) {
             isCameraPlayerRidingKart = isRidingNow;
 
-            Camera.lastPos = null;
+            RidingCamera.lastPos = null;
             hasDirectionYawSamples = false;
             Minimap.clearAllMap();
             Overtake.resetGauge();

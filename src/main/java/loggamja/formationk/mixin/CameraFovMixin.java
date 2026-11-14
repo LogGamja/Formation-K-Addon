@@ -3,6 +3,7 @@ package loggamja.formationk.mixin;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import loggamja.formationk.Main;
+import loggamja.formationk.RidingCamera;
 import loggamja.formationk.helper.FlashbackDetector;
 import loggamja.formationk.option.Config;
 import net.minecraft.client.Camera;
@@ -96,7 +97,7 @@ public abstract class CameraFovMixin {
     }
     @Unique
     private float formationk$getCameraModeFov(float tickDelta) {
-        float interpolatedFOV = Mth.lerp(tickDelta, loggamja.formationk.Camera.filteredFOVAtPrevTick, loggamja.formationk.Camera.filteredFOV);
+        float interpolatedFOV = Mth.lerp(tickDelta, RidingCamera.filteredFOVAtPrevTick, RidingCamera.filteredFOV);
         if (formationk$options.getCameraType() == CameraType.FIRST_PERSON) {
             interpolatedFOV *= 0.825f;
         }
