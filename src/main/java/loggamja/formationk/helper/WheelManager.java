@@ -135,6 +135,8 @@ public class WheelManager {
     }
 
     private static WheelPivot measure(WheelKey wheelKey) {
+        // 반드시 이 순서대로 불러야 함
+
         wheelMeasurer.beginCenter();
         for (var wheelPart : wheelParts.values()) {
             if (wheelKey.equals(wheelPart.wheelKey)) wheelMeasurer.addToCenter(wheelPart.modelPoints, wheelPart.displayTransform);

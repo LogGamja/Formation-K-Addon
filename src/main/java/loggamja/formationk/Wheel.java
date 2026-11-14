@@ -15,7 +15,7 @@ public class Wheel implements ClientModInitializer {
     private static final float MAX_STEER_DEG = 35f;
     private static final float MIN_STEER_SPEED = 0.5f;
 
-    private static final float GRIP_STEER_SCALE = -1f;
+    private static final float GRIP_STEER_SCALE = -0.75f;
     private static final float DRIFT_STEER_SCALE = 0.5f;
 
 
