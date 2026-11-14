@@ -47,7 +47,7 @@ public class WheelManager {
     private static final Vector3f scratchNegatedCenter = new Vector3f();
 
     public static WheelPartInfo getWheelPartInfo(Display entity) {
-        if (Config.INSTANCE.wheelEffect == 0 || !entity.hasCustomName()) return null;
+        if ((Config.INSTANCE.wheelRoll == 0 && Config.INSTANCE.wheelSteer == 0) || !entity.hasCustomName()) return null;
 
         String entityName = entity.getCustomName().getString();
         boolean isSteerPart = entityName.startsWith(WHEEL_STEER_NAME);
@@ -62,7 +62,7 @@ public class WheelManager {
         }
 
         var wheelKey = new WheelKey(entity.getRootVehicle().getUUID(), wheelId);
-        boolean canSteer = isSteerPart && Config.INSTANCE.wheelEffect >= 2;
+        boolean canSteer = isSteerPart && Config.INSTANCE.wheelSteer > 0;
 
         BlockState blockState = entity instanceof Display.BlockDisplay blockDisplay && blockDisplay.blockRenderState() != null ? blockDisplay.blockRenderState().blockState() : null;
 
@@ -121,8 +121,11 @@ public class WheelManager {
         }
 
         float partialTick = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
-        float rollAngle = Mth.lerp(partialTick, wheelMotion.prevRotateDist(), wheelMotion.rotateDist()) / Math.max(wheelPivot.radius(), 0.05f);
-        rollAngle %= Mth.TWO_PI;
+        float rollAngle = 0f;
+        if (Config.INSTANCE.wheelRoll == 1) {
+            rollAngle = Mth.lerp(partialTick, wheelMotion.prevRotateDist(), wheelMotion.rotateDist()) / Math.max(wheelPivot.radius(), 0.05f);
+            rollAngle %= Mth.TWO_PI;
+        }
 
         float steerAngle = partInfo.canSteer() ? Mth.lerp(partialTick, wheelMotion.prevSteerAngle(), wheelMotion.steerAngle()) : 0f;
         if (rollAngle == 0f && steerAngle == 0f) return;
