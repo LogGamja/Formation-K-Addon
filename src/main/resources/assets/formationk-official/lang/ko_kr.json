@@ -9,7 +9,7 @@
   "formationk.setting.category.camera": "카메라",
 
   "formationk.option.steer_boost.off": "조작 가속: 꺼짐",
-  "formationk.option.steer_boost.extreme": "조작 가속: 극한",
+  "formationk.option.steer_boost.extreme": "조작 가속: 켜짐",
   "formationk.tooltip.steer_boost": "카트 탑승 시 조작감을 최적화합니다.",
 
   "formationk.option.packet_boost.off": "패킷 가속: 꺼짐",
@@ -61,11 +61,11 @@
   "formationk.option.wheel_roll.on": "바퀴 회전: 켜짐",
   "formationk.tooltip.wheel_roll": "바퀴 모델이 속도에 맞춰 구릅니다.",
   "formationk.option.wheel_steer.off": "바퀴 조향: 꺼짐",
-  "formationk.option.wheel_steer.basic": "바퀴 조향: 기본",
-  "formationk.option.wheel_steer.counter": "바퀴 조향: 기본과 카운터",
+  "formationk.option.wheel_steer.basic": "바퀴 조향: 핸들링",
+  "formationk.option.wheel_steer.counter": "바퀴 조향: 핸들링 + 카운터",
   "formationk.option.wheel_steer.corner": "바퀴 조향: 코너각",
-  "formationk.option.wheel_steer.corner_counter": "바퀴 조향: 코너각과 카운터",
-  "formationk.tooltip.wheel_steer": "앞바퀴가 방향에 따라 꺾입니다.",
+  "formationk.option.wheel_steer.corner_counter": "바퀴 조향: 코너각 + 카운터",
+  "formationk.tooltip.wheel_steer": "앞바퀴가 핸들링 속도 또는 코너링 각도에 따라 꺾입니다.",
 
   "formationk.option.bike_suspension.default": "바이크 서스펜션: 기본",
   "formationk.option.bike_suspension.four_wheel": "바이크 서스펜션: 4륜 카트",

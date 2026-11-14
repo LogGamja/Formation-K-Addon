@@ -53,6 +53,9 @@ public class WheelManager {
         boolean isSteerPart = entityName.startsWith(WHEEL_STEER_NAME);
         if (!isSteerPart && !entityName.startsWith(WHEEL_NAME)) return null;
 
+        boolean canSteer = isSteerPart && Config.INSTANCE.wheelSteer > 0;
+        if (Config.INSTANCE.wheelRoll == 0 && !canSteer) return null;
+
         int wheelId;
         try {
             wheelId = Integer.parseInt(entityName.substring((isSteerPart ? WHEEL_STEER_NAME : WHEEL_NAME).length()));
@@ -62,7 +65,6 @@ public class WheelManager {
         }
 
         var wheelKey = new WheelKey(entity.getRootVehicle().getUUID(), wheelId);
-        boolean canSteer = isSteerPart && Config.INSTANCE.wheelSteer > 0;
 
         BlockState blockState = entity instanceof Display.BlockDisplay blockDisplay && blockDisplay.blockRenderState() != null ? blockDisplay.blockRenderState().blockState() : null;
 

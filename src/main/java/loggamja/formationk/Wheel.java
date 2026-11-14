@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.HashMap;
@@ -18,18 +19,15 @@ public class Wheel implements ClientModInitializer {
     private static final float MAX_STEER_DEG = 35f;
     private static final float MIN_STEER_SPEED = 0.5f;
 
+    // 그립주행과 카운터 스티어 가중치
     private static final float GRIP_STEER_SCALE = -0.75f;
     private static final float DRIFT_STEER_SCALE = 0.5f;
 
-    // 틱당 회전량(도) 1당 바퀴가 꺾이는 각도
-    private static final float ANGULAR_STEER_SCALE = 6f;
+    private static final float STEER_WEIGHT = 0.8f;
+    private static final float YAW_PER_TICK_SCALE = -8f;
 
-    // Config.wheelSteer: 1 기본[1](각속도), 2 카운터[2](각속도), 3 코너각[3], 4 코너각 카운터[4]
-    private static final int LAST_ANGULAR_STEER = 2;
-
+    // 각속도 계열
     private record PlayerYaw(float yaw, long tick) {}
-
-    // 플레이어 회전은 틱 시작에 yRotO 로 복사되어 yRot - yRotO 가 항상 0이라 직접 기록한다
     private static final Map<UUID, PlayerYaw> playerYaws = new HashMap<>();
 
     @Override
@@ -53,7 +51,6 @@ public class Wheel implements ClientModInitializer {
 
         var world = Objects.requireNonNull(Minecraft.getInstance().level);
         long gameTime = world.getGameTime();
-        if (!usesAngularVelocity(Config.INSTANCE.wheelSteer)) playerYaws.clear();
 
         int ridingKartCount = 0;
         for (Player player : world.players()) {
@@ -63,9 +60,8 @@ public class Wheel implements ClientModInitializer {
             ridingKartCount++;
         }
 
-        if (playerYaws.size() > ridingKartCount) {
-            playerYaws.entrySet().removeIf(e -> e.getValue().tick() != gameTime);
-        }
+        // 이번 틱에 갱신되지 않은 기록 삭제
+        playerYaws.values().removeIf(playerYaw -> playerYaw.tick() != gameTime);
         WheelManager.endTick(ridingKartCount);
     }
 
@@ -77,42 +73,44 @@ public class Wheel implements ClientModInitializer {
         float positionSpeed = (float) Math.hypot(kartDeltaX, kartDeltaZ) * 20f;
 
         float speedMetersPerSecond = positionSpeed;
-        if (player == Main.getCameraPlayer() && RidingCamera.timeAfterLastActionbar <= 20) {
+        if (player == Main.getCameraPlayer() && RidingCamera.isActionbarSpeedFresh()) {
             speedMetersPerSecond = RidingCamera.actionbarSpeed / 3.6f;
         }
 
         int wheelSteer = Config.INSTANCE.wheelSteer;
-
-        float yawPerTick = 0f;
-        if (usesAngularVelocity(wheelSteer)) {
-            var prevPlayerYaw = playerYaws.put(player.getUUID(), new PlayerYaw(player.getYRot(), gameTime));
-            if (prevPlayerYaw != null) yawPerTick = Mth.wrapDegrees(player.getYRot() - prevPlayerYaw.yaw());
-        }
+        boolean usesAngularVelocity = wheelSteer == 1 || wheelSteer == 2;
+        boolean isCounterSteer = wheelSteer == 2 || wheelSteer == 4;
 
         float targetSteerAngle = 0f;
-        if (wheelSteer > 0 && positionSpeed > MIN_STEER_SPEED) {
-            boolean isCounterSteer = wheelSteer % 2 == 0;
-            boolean usesDriftDirection = Main.getS2CValue(player, "state-drift") == 1 && isCounterSteer;
+        if (wheelSteer > 0) {
+            float steerInput = usesAngularVelocity
+                ? getSteerSpeed(player, gameTime) * YAW_PER_TICK_SCALE
+                : getDriftAngle(kart, kartDeltaX, kartDeltaZ);
 
-            if (usesAngularVelocity(wheelSteer)) {
-                targetSteerAngle = yawPerTick * (usesDriftDirection ? -ANGULAR_STEER_SCALE : ANGULAR_STEER_SCALE);
-            }
-            else {
-                for (var passenger : kart.getPassengers()) {
-                    if (!Main.hasCertainName(passenger, "formationk-datacarrier")) continue;
+            if (positionSpeed > MIN_STEER_SPEED) {
+                boolean usesDriftDirection = isCounterSteer && Main.getS2CValue(player, "state-drift") == 1;
+                float steerScale = usesDriftDirection ? DRIFT_STEER_SCALE : GRIP_STEER_SCALE;
 
-                    float movementYaw = (float) Math.toDegrees(Math.atan2(-kartDeltaX, kartDeltaZ));
-                    float yawDifference = Mth.wrapDegrees(movementYaw - passenger.getYRot());
-                    targetSteerAngle = yawDifference * (usesDriftDirection ? DRIFT_STEER_SCALE : GRIP_STEER_SCALE);
-                }
+                targetSteerAngle = Mth.clamp(steerInput * steerScale * STEER_WEIGHT, -MAX_STEER_DEG, MAX_STEER_DEG);
             }
-            targetSteerAngle = Mth.clamp(targetSteerAngle, -MAX_STEER_DEG, MAX_STEER_DEG);
         }
 
         WheelManager.update(kart.getUUID(), speedMetersPerSecond, targetSteerAngle);
     }
 
-    private static boolean usesAngularVelocity(int wheelSteer) {
-        return wheelSteer >= 1 && wheelSteer <= LAST_ANGULAR_STEER;
+    private static float getSteerSpeed(Player player, long gameTime) {
+        var prevPlayerYaw = playerYaws.put(player.getUUID(), new PlayerYaw(player.getYRot(), gameTime));
+        return prevPlayerYaw == null ? 0f : Mth.wrapDegrees(player.getYRot() - prevPlayerYaw.yaw());
+    }
+
+    private static float getDriftAngle(Entity kart, double kartDeltaX, double kartDeltaZ) {
+        float movementYaw = (float) Math.toDegrees(Math.atan2(-kartDeltaX, kartDeltaZ));
+
+        for (var passenger : kart.getPassengers()) {
+            if (!Main.hasCertainName(passenger, "formationk-datacarrier")) continue;
+
+            return Mth.wrapDegrees(movementYaw - passenger.getYRot());
+        }
+        return 0f;
     }
 }
