@@ -87,7 +87,7 @@ public class Wheel implements ClientModInitializer {
                 ? getSteerSpeed(player, gameTime) * YAW_PER_TICK_SCALE
                 : getDriftAngle(kart, kartDeltaX, kartDeltaZ);
 
-            if (positionSpeed > MIN_STEER_SPEED) {
+            if (usesAngularVelocity || positionSpeed > MIN_STEER_SPEED) {
                 boolean usesDriftDirection = isCounterSteer && Main.getS2CValue(player, "state-drift") == 1;
                 float steerScale = usesDriftDirection ? DRIFT_STEER_SCALE : GRIP_STEER_SCALE;
 
