@@ -90,7 +90,7 @@ public class DisplayEntityRendererMixin {
     private void formationk$captureUuid(Display entity, DisplayEntityRenderState state, float tickDelta, CallbackInfo ci) {
         DisplayEntityRenderStateAccessor accessor = (DisplayEntityRenderStateAccessor) state;
         accessor.formationk$setUuid(entity.getUUID());
-        accessor.formationk$setWheel(WheelManager.capture(entity));
+        accessor.formationk$setWheel(WheelManager.getWheelPartInfo(entity));
 
         if (entity.isPassenger()) {
             double pivotY = entity.getY() - entity.getRootVehicle().getY() - Suspension.pivotYOffset;

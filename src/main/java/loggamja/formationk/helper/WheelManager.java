@@ -4,7 +4,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import loggamja.formationk.option.Config;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.state.DisplayEntityRenderState;
-import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Display;
 import org.joml.Matrix4f;
@@ -17,137 +16,136 @@ import java.util.UUID;
 // Claude Sonnet 5.5로 제작된 바퀴 회전 애니메이션 헬퍼
 
 public class WheelManager {
-    private static final String PREFIX = "formationk-wheel-";
-    private static final String PREFIX_STEER = "formationk-wheel-steer-";
+    private static final String WHEEL_NAME = "formationk-wheel-";
+    private static final String WHEEL_STEER_NAME = "formationk-wheel-steer-";
 
-    private static final int GEOM_REFRESH_TICKS = 40;
-    private static final int SET_REFRESH_TICKS = 5;
-    private static final int KEEP_TICKS = 200;
+    private static final int POINTS_REFRESH_TICKS = 40;
+    private static final int PIVOT_REFRESH_TICKS = 5;
+    private static final int CACHE_KEEP_TICKS = 200;
 
-    public record WheelKey(UUID kart, int id) {}
-    public record WheelPartInfo(WheelKey key, boolean steer, UUID part) {}
+    public record WheelKey(UUID kartId, int wheelId) {}
+    public record WheelPartInfo(WheelKey wheelKey, boolean canSteer, UUID partId) {}
+
+    private record WheelMotion(float rotateDist, float prevRotateDist, float steerAngle, float prevSteerAngle, long updatedTick) {}
+    private record WheelPivot(Vector3f center, float radius, long measuredTick) {}
 
     private static final class WheelPart {
-        WheelKey key;
-        float[] points = new float[0];
-        int collectTick = -9999;
-        int seenTick;
-        final Matrix4f transform = new Matrix4f();
+        WheelKey wheelKey;
+        float[] modelPoints = new float[0];
+        long pointsCollectedTick = -POINTS_REFRESH_TICKS;
+        long lastRenderedTick;
+        final Matrix4f displayTransform = new Matrix4f();
     }
 
-    private static final class WheelState {
-        int seenTick;
-        int measureTick = -9999;
-        boolean measured;
-        final WheelGeometry geometry = new WheelGeometry();
-    }
+    private static final Map<UUID, WheelMotion> wheelMotions = new HashMap<>();
+    private static final Map<UUID, WheelPart> wheelParts = new HashMap<>();
+    private static final Map<WheelKey, WheelPivot> wheelPivots = new HashMap<>();
+    private static final WheelMeasurer wheelMeasurer = new WheelMeasurer();
 
-    private static final class KartMotion {
-        int seenTick;
-        float dist, prevDist;
-        float steer, prevSteer;
-    }
+    private static final Matrix4f scratchWheelRotation = new Matrix4f();
+    private static final Vector3f scratchNegatedCenter = new Vector3f();
 
-    private static final Map<UUID, WheelPart> parts = new HashMap<>();
-    private static final Map<WheelKey, WheelState> wheels = new HashMap<>();
-    private static final Map<UUID, KartMotion> kartMotions = new HashMap<>();
-    private static int tick = 0;
+    public static WheelPartInfo getWheelPartInfo(Display entity) {
+        if (Config.INSTANCE.wheelEffect == 0 || !entity.hasCustomName()) return null;
 
-    private static final Matrix4f scratchW = new Matrix4f();
-    private static final Vector3f scratchV = new Vector3f();
+        String entityName = entity.getCustomName().getString();
+        boolean isSteerPart = entityName.startsWith(WHEEL_STEER_NAME);
+        if (!isSteerPart && !entityName.startsWith(WHEEL_NAME)) return null;
 
-    public static WheelPartInfo capture(Display entity) {
-        if (Config.INSTANCE.wheelEffect == 0) return null;
-        if (!entity.hasCustomName()) return null;
-        Component name = entity.getCustomName();
-        if (name == null) return null;
-        String s = name.getString();
-        if (!s.startsWith(PREFIX)) return null;
-
-        boolean steerName = s.startsWith(PREFIX_STEER);
-        boolean steer = steerName && Config.INSTANCE.wheelEffect >= 2;
-        String num = s.substring(steerName ? PREFIX_STEER.length() : PREFIX.length());
-        int id;
+        int wheelId;
         try {
-            id = Integer.parseInt(num);
+            wheelId = Integer.parseInt(entityName.substring((isSteerPart ? WHEEL_STEER_NAME : WHEEL_NAME).length()));
         }
         catch (NumberFormatException e) {
             return null;
         }
 
-        return new WheelPartInfo(new WheelKey(entity.getRootVehicle().getUUID(), id), steer, entity.getUUID());
+        var wheelKey = new WheelKey(entity.getRootVehicle().getUUID(), wheelId);
+        boolean canSteer = isSteerPart && Config.INSTANCE.wheelEffect >= 2;
+
+        return new WheelPartInfo(wheelKey, canSteer, entity.getUUID());
+    }
+
+    public static void update(UUID kartId, float speedMetersPerSecond, float targetSteerAngle) {
+        var prevWheelMotion = wheelMotions.get(kartId);
+        if (prevWheelMotion == null) prevWheelMotion = new WheelMotion(0f, 0f, 0f, 0f, 0L);
+
+        float rotateDist = prevWheelMotion.rotateDist() + speedMetersPerSecond / 20f;
+        float steerAngle = prevWheelMotion.steerAngle() + (targetSteerAngle - prevWheelMotion.steerAngle()) * 0.5f;
+
+        wheelMotions.put(kartId, new WheelMotion(rotateDist, prevWheelMotion.rotateDist(), steerAngle, prevWheelMotion.steerAngle(), now()));
+    }
+
+    public static void endTick(int ridingKartCount) {
+        if (wheelMotions.size() > ridingKartCount) {
+            wheelMotions.entrySet().removeIf(e -> e.getValue().updatedTick() != now());
+        }
+
+        wheelPivots.entrySet().removeIf(e -> now() - e.getValue().measuredTick() > CACHE_KEEP_TICKS);
+        wheelParts.entrySet().removeIf(e -> now() - e.getValue().lastRenderedTick > CACHE_KEEP_TICKS);
+    }
+
+    private static long now() {
+        return Minecraft.getInstance().level.getGameTime();
     }
 
     public static void clear() {
-        wheels.clear();
-        parts.clear();
-        kartMotions.clear();
+        wheelMotions.clear();
+        wheelParts.clear();
+        wheelPivots.clear();
     }
 
-    public static void tick() {
-        tick++;
-        kartMotions.entrySet().removeIf(e -> e.getValue().seenTick < tick - 1);
-        wheels.entrySet().removeIf(e -> tick - e.getValue().seenTick > KEEP_TICKS);
-        parts.entrySet().removeIf(e -> tick - e.getValue().seenTick > KEEP_TICKS);
+    public static void apply(DisplayEntityRenderState renderState, WheelPartInfo partInfo, PoseStack matrices, Matrix4f displayTransform) {
+        var wheelMotion = wheelMotions.get(partInfo.wheelKey().kartId());
+        if (wheelMotion == null) return;
+        if (Math.abs(displayTransform.determinant()) < Float.MIN_NORMAL) return;
+
+        var wheelPart = wheelParts.computeIfAbsent(partInfo.partId(), k -> new WheelPart());
+        wheelPart.wheelKey = partInfo.wheelKey();
+        wheelPart.lastRenderedTick = now();
+        wheelPart.displayTransform.set(displayTransform);
+
+        if (now() - wheelPart.pointsCollectedTick >= POINTS_REFRESH_TICKS) {
+            wheelPart.modelPoints = WheelMeasurer.collectPoints(renderState);
+            wheelPart.pointsCollectedTick = now();
+        }
+
+        var wheelPivot = wheelPivots.get(partInfo.wheelKey());
+        if (wheelPivot == null || now() - wheelPivot.measuredTick() >= PIVOT_REFRESH_TICKS) {
+            wheelPivot = measure(partInfo.wheelKey());
+            if (wheelPivot == null) return;
+            wheelPivots.put(partInfo.wheelKey(), wheelPivot);
+        }
+
+        float partialTick = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
+        float rollAngle = Mth.lerp(partialTick, wheelMotion.prevRotateDist(), wheelMotion.rotateDist()) / Math.max(wheelPivot.radius(), 0.05f);
+        rollAngle %= Mth.TWO_PI;
+
+        float steerAngle = partInfo.canSteer() ? Mth.lerp(partialTick, wheelMotion.prevSteerAngle(), wheelMotion.steerAngle()) : 0f;
+        if (rollAngle == 0f && steerAngle == 0f) return;
+
+        scratchWheelRotation.identity()
+                .translate(wheelPivot.center())
+                .rotateY((float) Math.toRadians(-steerAngle))
+                .rotateX(rollAngle)
+                .translate(wheelPivot.center().negate(scratchNegatedCenter));
+
+        // 호출 쪽이 역행렬(M) 과 M 을 이미 감싸고 있다
+        matrices.mulPose(scratchWheelRotation);
     }
 
-    public static void update(UUID kart, float speed, float steerTarget) {
-        KartMotion motion = kartMotions.computeIfAbsent(kart, k -> new KartMotion());
-        motion.seenTick = tick;
-        motion.prevSteer = motion.steer;
-        motion.steer += (steerTarget - motion.steer) * 0.5f;
-        motion.prevDist = motion.dist;
-        motion.dist += speed / 20f;
-    }
-
-    public static void apply(DisplayEntityRenderState state, WheelPartInfo info, PoseStack matrices, Matrix4f original) {
-        KartMotion motion = kartMotions.get(info.key().kart());
-        if (motion == null) return;
-        if (Math.abs(original.determinant()) < Float.MIN_NORMAL) return;
-
-        WheelPart part = parts.computeIfAbsent(info.part(), k -> new WheelPart());
-        part.key = info.key();
-        part.seenTick = tick;
-        part.transform.set(original);
-        if (tick - part.collectTick >= GEOM_REFRESH_TICKS) {
-            part.points = WheelGeometry.collectPoints(state);
-            part.collectTick = tick;
+    private static WheelPivot measure(WheelKey wheelKey) {
+        wheelMeasurer.beginCenter();
+        for (var wheelPart : wheelParts.values()) {
+            if (wheelKey.equals(wheelPart.wheelKey)) wheelMeasurer.addToCenter(wheelPart.modelPoints, wheelPart.displayTransform);
         }
 
-        WheelState wheel = wheels.computeIfAbsent(info.key(), k -> new WheelState());
-        wheel.seenTick = tick;
-        if (tick - wheel.measureTick >= SET_REFRESH_TICKS) {
-            wheel.measured = measure(info.key(), wheel.geometry);
-            wheel.measureTick = tick;
+        if (!wheelMeasurer.endCenter()) return null;
+
+        for (var wheelPart : wheelParts.values()) {
+            if (wheelKey.equals(wheelPart.wheelKey)) wheelMeasurer.addToRadius(wheelPart.modelPoints, wheelPart.displayTransform);
         }
-        if (!wheel.measured) return;
 
-        float partial = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
-        float roll = Mth.lerp(partial, motion.prevDist, motion.dist) / Math.max(wheel.geometry.radius, 0.05f);
-        roll = roll % Mth.TWO_PI;
-        float steer = info.steer() ? Mth.lerp(partial, motion.prevSteer, motion.steer) : 0f;
-        if (roll == 0f && steer == 0f) return;
-
-        scratchW.identity()
-                .translate(wheel.geometry.center)
-                .rotateY((float) Math.toRadians(-steer))
-                .rotateX(roll)
-                .translate(wheel.geometry.center.negate(scratchV));
-
-        // 호출 쪽이 M⁻¹ 과 M 을 이미 감싸고 있다
-        matrices.mulPose(scratchW);
-    }
-
-    private static boolean measure(WheelKey key, WheelGeometry geometry) {
-        geometry.beginCenter();
-        for (WheelPart part : parts.values()) {
-            if (key.equals(part.key) && part.points.length > 0) geometry.addToCenter(part.points, part.transform);
-        }
-        if (!geometry.endCenter()) return false;
-
-        for (WheelPart part : parts.values()) {
-            if (key.equals(part.key) && part.points.length > 0) geometry.addToRadius(part.points, part.transform);
-        }
-        return true;
+        return new WheelPivot(new Vector3f(wheelMeasurer.center), wheelMeasurer.radius, now());
     }
 }

@@ -7,14 +7,17 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+
+import java.util.Objects;
 
 public class Wheel implements ClientModInitializer {
     private static final float MAX_STEER_DEG = 35f;
-    private static final float GRIP_STEER_SCALE = 1f;
-    private static final float DRIFT_STEER_SCALE = 0.5f;
     private static final float MIN_STEER_SPEED = 0.5f;
+
+    private static final float GRIP_STEER_SCALE = -1f;
+    private static final float DRIFT_STEER_SCALE = 0.5f;
+
 
     @Override
     public void onInitializeClient() {
@@ -31,52 +34,49 @@ public class Wheel implements ClientModInitializer {
             return;
         }
 
-        var world = Minecraft.getInstance().level;
-        if (world == null) return;
+        var world = Objects.requireNonNull(Minecraft.getInstance().level);
 
-        WheelManager.tick();
+        int ridingKartCount = 0;
         for (Player player : world.players()) {
             if (!Main.isRidingKart(player)) continue;
+
             processPlayer(player);
+            ridingKartCount++;
         }
+
+        WheelManager.endTick(ridingKartCount);
     }
 
     private void processPlayer(Player player) {
-        Entity kart = player.getRootVehicle();
+        var kart = player.getRootVehicle();
 
-        double dx = kart.getX() - kart.xo;
-        double dz = kart.getZ() - kart.zo;
-        double moved = Math.sqrt(dx * dx + dz * dz) * 20.0;
+        double kartDeltaX = kart.getX() - kart.xo;
+        double kartDeltaZ = kart.getZ() - kart.zo;
+        float positionSpeed = (float) Math.hypot(kartDeltaX, kartDeltaZ) * 20f;
 
-        double speed = moved;
+        float speedMetersPerSecond = positionSpeed;
         if (player == Main.getCameraPlayer() && Camera.timeAfterLastActionbar <= 20) {
-            speed = Camera.actionbarSpeed / 3.6;
+            speedMetersPerSecond = Camera.actionbarSpeed / 3.6f;
         }
 
-        float steerTarget = 0f;
-        if (moved > MIN_STEER_SPEED) {
-            float steerDirection = 0f;
-            boolean hasCarrier = false;
-            for (var i : kart.getPassengers()) {
-                if (Main.hasCertainName(i, "formationk-datacarrier")) {
-                    steerDirection = i.getYRot();
-                    hasCarrier = true;
-                }
-            }
+        float targetSteerAngle = 0f;
+        if (positionSpeed > MIN_STEER_SPEED) {
+            for (var passenger : kart.getPassengers()) {
+                if (!Main.hasCertainName(passenger, "formationk-datacarrier")) continue;
 
-            if (hasCarrier) {
-                float heading = (float) Math.toDegrees(Math.atan2(-dx, dz));
-                float delta = Mth.wrapDegrees(heading - steerDirection);
-                // 그립 주행은 기준 방향이 먼저 돌고 이동 방향이 늦게 따라오므로 핸들을 반대로 꺾는다
+                float movementYaw = (float) Math.toDegrees(Math.atan2(-kartDeltaX, kartDeltaZ));
+                float yawDifference = Mth.wrapDegrees(movementYaw - passenger.getYRot());
+
                 if (Main.getS2CValue(player, "state-drift") == 1) {
-                    delta *= DRIFT_STEER_SCALE;
-                } else {
-                    delta *= -GRIP_STEER_SCALE;
+                    yawDifference *= DRIFT_STEER_SCALE;
                 }
-                steerTarget = Mth.clamp(delta, -MAX_STEER_DEG, MAX_STEER_DEG);
+                else {
+                    yawDifference *= GRIP_STEER_SCALE;
+                }
+                targetSteerAngle = Mth.clamp(yawDifference, -MAX_STEER_DEG, MAX_STEER_DEG);
             }
         }
 
-        WheelManager.update(kart.getUUID(), (float) speed, steerTarget);
+        WheelManager.update(kart.getUUID(), speedMetersPerSecond, targetSteerAngle);
     }
 }
