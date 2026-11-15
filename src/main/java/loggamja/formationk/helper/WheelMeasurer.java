@@ -59,11 +59,13 @@ public class WheelMeasurer {
         return true;
     }
 
-    // 회전 축이 X 라서 중심과의 거리는 Y, Z 평면에서만 잰다
-    public void addToRadius(float[] modelPoints, Matrix4f displayTransform) {
+    // 회전 축에 수직인 방향의 거리만 잰다
+    public void addToRadius(float[] modelPoints, Matrix4f displayTransform, Vector3f rotationAxis) {
         for (int i = 0; i < modelPoints.length; i += 3) {
             displayTransform.transformPosition(modelPoints[i], modelPoints[i + 1], modelPoints[i + 2], scratchPosition);
-            radius = Math.max(radius, (float) Math.hypot(scratchPosition.y - center.y, scratchPosition.z - center.z));
+            scratchPosition.sub(center);
+            scratchPosition.fma(-scratchPosition.dot(rotationAxis), rotationAxis);
+            radius = Math.max(radius, scratchPosition.length());
         }
     }
 
