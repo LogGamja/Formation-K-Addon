@@ -17,7 +17,7 @@ import java.util.UUID;
 // Claude Sonnet 5.5로 제작된 바퀴 회전 애니메이션 헬퍼
 
 public class WheelManager {
-    private static final int POINTS_REFRESH_TICKS = 40;
+    static final int POINTS_REFRESH_TICKS = 40;
     private static final int PIVOT_REFRESH_TICKS = 5;
     static final int CACHE_KEEP_TICKS = 200;
 
