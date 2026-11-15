@@ -27,18 +27,17 @@ public class DisplayEntityRendererMixin {
 
     // GC 완화용 스크래치
     @Unique private static final Matrix4f formationk$scratchOriginal = new Matrix4f();
-    @Unique private static final Matrix4f formationk$scratchInverse = new Matrix4f();
     @Unique private static final Matrix4f formationk$scratchRoll = new Matrix4f();
 
     @Unique private static final float formationk$MIN_DETERMINANT = Float.MIN_NORMAL;
 
     // render() 호출 시 MatrixStack에 roll rotation을 주입합니다.
-    // AT 타겟: setupTransforms 이후, 실제 geometry 렌더링 직전
+    // AT 타겟: 디스플레이 변환 행렬(M)을 곱하기 직전 — 회전이 M 앞에 곱해져서 역행렬이 필요 없다
     @Inject(
             method = "submit(Lnet/minecraft/client/renderer/entity/state/DisplayEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/renderer/entity/DisplayRenderer;submitInner(Lnet/minecraft/client/renderer/entity/state/DisplayEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;IF)V"
+                    target = "Lcom/mojang/blaze3d/vertex/PoseStack;mulPose(Lcom/mojang/math/Transformation;)V"
             )
     )
     private void formationk$injectRollRotation(
@@ -64,9 +63,6 @@ public class DisplayEntityRendererMixin {
         // 작은 디스플레이 검사하지 않음
         if (Math.abs(formationk$scratchOriginal.determinant()) < formationk$MIN_DETERMINANT) return;
 
-        formationk$scratchInverse.set(formationk$scratchOriginal).invert();
-        matrices.mulPose(formationk$scratchInverse);
-
         if (rollDeg != 0f) {
             double pivotY = acc.formationk$getPivotY();
             formationk$scratchRoll.rotationZ((float) Math.toRadians(rollDeg));
@@ -80,8 +76,6 @@ public class DisplayEntityRendererMixin {
         if (wheel != null) {
             WheelManager.apply(state, wheel, matrices, formationk$scratchOriginal);
         }
-
-        matrices.mulPose(formationk$scratchOriginal);
     }
     @Inject(
             method = "extractRenderState(Lnet/minecraft/world/entity/Display;Lnet/minecraft/client/renderer/entity/state/DisplayEntityRenderState;F)V",

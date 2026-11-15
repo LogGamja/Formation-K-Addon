@@ -169,7 +169,7 @@ public class WheelManager {
                 .translate(wheelPivot.rollCenter().negate(scratchNegatedCenter));
         }
 
-        // 호출 쪽이 역행렬(M) 과 M 을 이미 감싸고 있다
+        // 호출 쪽에서 이 뒤에 M 을 곱한다
         matrices.mulPose(scratchWheelRotation);
     }
 
