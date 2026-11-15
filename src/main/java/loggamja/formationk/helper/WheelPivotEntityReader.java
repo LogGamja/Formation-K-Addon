@@ -3,6 +3,7 @@ package loggamja.formationk.helper;
 import loggamja.formationk.helper.WheelManager.WheelKey;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.block.state.BlockState;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -15,7 +16,7 @@ import java.util.UUID;
 public class WheelPivotEntityReader {
     private record PivotPoint(Vector3f point, long seenTick) {}
 
-    private record PivotModel(float[] modelPoints, long collectedTick) {}
+    private record PivotModel(float[] modelPoints, BlockState blockState, long collectedTick) {}
 
     private static final Map<WheelKey, PivotPoint> rollPivotPoints = new HashMap<>();
     private static final Map<WheelKey, PivotPoint> steerPivotPoints = new HashMap<>();
@@ -46,9 +47,10 @@ public class WheelPivotEntityReader {
         if (renderState == null) return null;
 
         var displayTransform = new Matrix4f(renderState.transformation().get(1f).getMatrix());
+        var blockState = WheelManager.getBlockState(display);
         var pivotModel = pivotModels.get(display.getUUID());
-        if (pivotModel == null || now - pivotModel.collectedTick() >= WheelManager.POINTS_REFRESH_TICKS) {
-            pivotModel = new PivotModel(WheelMeasurer.collectPoints(null, WheelManager.getBlockState(display)), now);
+        if (pivotModel == null || pivotModel.blockState() != blockState || now - pivotModel.collectedTick() >= WheelManager.POINTS_REFRESH_TICKS) {
+            pivotModel = new PivotModel(WheelMeasurer.collectPoints(null, blockState), blockState, now);
             pivotModels.put(display.getUUID(), pivotModel);
         }
 

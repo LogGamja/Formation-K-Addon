@@ -11,10 +11,11 @@ import java.util.regex.Pattern;
 // 데이터팩이 디스플레이에 붙이는 바퀴 이름 해석
 // formationk-wheel-steer-[축]-[축]-번호, formationk-wheel-[축]-번호, formationk-steer-[축]-번호
 // 피봇 엔티티: formationk-wheel-steer-pivot-번호, formationk-wheel-pivot-번호, formationk-steer-pivot-번호
+// 조향 파츠는 번호 앞에 nocounter- 를 붙여 카운터 스티어를 끈다
 // 피봇 엔티티는 canRoll / canSteer 가 어느 피봇인지를 뜻하고 축이 없다
 
 public class WheelNameParser {
-    public record WheelName(boolean canRoll, boolean canSteer, boolean isPivot, Vector3f wheelAxis, Vector3f steerAxis, int wheelId) {}
+    public record WheelName(boolean canRoll, boolean canSteer, boolean isPivot, Vector3f wheelAxis, Vector3f steerAxis, boolean noCounter, int wheelId) {}
 
     private static final String WHEEL_NAME = "formationk-wheel-";
     private static final String STEER_NAME = "formationk-steer-";
@@ -95,8 +96,11 @@ public class WheelNameParser {
         var wheelAxis = !isPivot && canRoll ? axes.get(0) : null;
         var steerAxis = !isPivot && canSteer ? axes.get(axes.size() - 1) : null;
 
+        int idStart = rest.lastIndexOf('-') + 1;
+        boolean noCounter = !isPivot && canSteer && rest.substring(0, idStart).endsWith("-nocounter-");
+
         try {
-            return new WheelName(canRoll, canSteer, isPivot, wheelAxis, steerAxis, Integer.parseInt(rest.substring(rest.lastIndexOf('-') + 1)));
+            return new WheelName(canRoll, canSteer, isPivot, wheelAxis, steerAxis, noCounter, Integer.parseInt(rest.substring(idStart)));
         }
         catch (NumberFormatException e) {
             return null;

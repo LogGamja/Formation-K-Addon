@@ -22,9 +22,9 @@ public class WheelManager {
     static final int CACHE_KEEP_TICKS = 200;
 
     public record WheelKey(UUID kartId, int wheelId) {}
-    public record WheelPartInfo(WheelKey wheelKey, boolean canRoll, boolean canSteer, Vector3f wheelAxis, Vector3f steerAxis, UUID partId, BlockState blockState) {}
+    public record WheelPartInfo(WheelKey wheelKey, boolean canRoll, boolean canSteer, Vector3f wheelAxis, Vector3f steerAxis, boolean noCounter, UUID partId, BlockState blockState) {}
 
-    private record WheelMotion(float rotateDist, float prevRotateDist, float steerAngle, float prevSteerAngle, long updatedTick) {}
+    private record WheelMotion(float rotateDist, float prevRotateDist, float steerAngle, float prevSteerAngle, float gripSteerAngle, float prevGripSteerAngle, long updatedTick) {}
 
     private record WheelPivot(Vector3f steerCenter, Vector3f rollCenter, float radius, long measuredTick) {}
 
@@ -34,6 +34,7 @@ public class WheelManager {
         Vector3f wheelAxis;
         float[] modelPoints = new float[0];
         long pointsCollectedTick = -POINTS_REFRESH_TICKS;
+        BlockState pointsBlockState;
         long lastRenderedTick;
         final Matrix4f displayTransform = new Matrix4f();
     }
@@ -55,21 +56,23 @@ public class WheelManager {
 
         var wheelKey = new WheelKey(entity.getRootVehicle().getUUID(), wheelName.wheelId());
 
-        return new WheelPartInfo(wheelKey, wheelName.canRoll(), wheelName.canSteer(), wheelName.wheelAxis(), wheelName.steerAxis(), entity.getUUID(), getBlockState(entity));
+        return new WheelPartInfo(wheelKey, wheelName.canRoll(), wheelName.canSteer(), wheelName.wheelAxis(), wheelName.steerAxis(), wheelName.noCounter(), entity.getUUID(), getBlockState(entity));
     }
 
     static BlockState getBlockState(Display entity) {
         return entity instanceof Display.BlockDisplay blockDisplay && blockDisplay.blockRenderState() != null ? blockDisplay.blockRenderState().blockState() : null;
     }
 
-    public static void update(UUID kartId, float speedMetersPerSecond, float targetSteerAngle) {
+    // 그립 각도는 카운터 스티어를 끈 파츠가 쓴다
+    public static void update(UUID kartId, float speedMetersPerSecond, float targetSteerAngle, float targetGripSteerAngle) {
         var prevWheelMotion = wheelMotions.get(kartId);
-        if (prevWheelMotion == null) prevWheelMotion = new WheelMotion(0f, 0f, 0f, 0f, 0L);
+        if (prevWheelMotion == null) prevWheelMotion = new WheelMotion(0f, 0f, 0f, 0f, 0f, 0f, 0L);
 
         float rotateDist = prevWheelMotion.rotateDist() + speedMetersPerSecond / 20f;
         float steerAngle = prevWheelMotion.steerAngle() + (targetSteerAngle - prevWheelMotion.steerAngle()) * 0.5f;
+        float gripSteerAngle = prevWheelMotion.gripSteerAngle() + (targetGripSteerAngle - prevWheelMotion.gripSteerAngle()) * 0.5f;
 
-        wheelMotions.put(kartId, new WheelMotion(rotateDist, prevWheelMotion.rotateDist(), steerAngle, prevWheelMotion.steerAngle(), now()));
+        wheelMotions.put(kartId, new WheelMotion(rotateDist, prevWheelMotion.rotateDist(), steerAngle, prevWheelMotion.steerAngle(), gripSteerAngle, prevWheelMotion.gripSteerAngle(), now()));
     }
 
     public static void endTick(int ridingKartCount) {
@@ -105,9 +108,10 @@ public class WheelManager {
         wheelPart.lastRenderedTick = now();
         wheelPart.displayTransform.set(displayTransform);
 
-        if (now() - wheelPart.pointsCollectedTick >= POINTS_REFRESH_TICKS) {
+        if (now() - wheelPart.pointsCollectedTick >= POINTS_REFRESH_TICKS || partInfo.blockState() != wheelPart.pointsBlockState) {
             wheelPart.modelPoints = WheelMeasurer.collectPoints(renderState, partInfo.blockState());
             wheelPart.pointsCollectedTick = now();
+            wheelPart.pointsBlockState = partInfo.blockState();
         }
 
         var wheelPivot = wheelPivots.get(partInfo.wheelKey());
@@ -126,7 +130,9 @@ public class WheelManager {
 
         float steerAngle = 0f;
         if (partInfo.canSteer() && Config.INSTANCE.wheelSteer > 0) {
-            steerAngle = Mth.lerp(partialTick, wheelMotion.prevSteerAngle(), wheelMotion.steerAngle());
+            steerAngle = partInfo.noCounter()
+                ? Mth.lerp(partialTick, wheelMotion.prevGripSteerAngle(), wheelMotion.gripSteerAngle())
+                : Mth.lerp(partialTick, wheelMotion.prevSteerAngle(), wheelMotion.steerAngle());
         }
         if (rollAngle == 0f && steerAngle == 0f) return;
 

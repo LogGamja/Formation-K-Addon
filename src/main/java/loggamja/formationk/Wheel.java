@@ -83,6 +83,7 @@ public class Wheel implements ClientModInitializer {
         boolean isCounterSteer = wheelSteer == 2 || wheelSteer == 4;
 
         float targetSteerAngle = 0f;
+        float targetGripSteerAngle = 0f;
         if (wheelSteer > 0) {
             float steerInput = usesAngularVelocity
                 ? getSteerSpeed(player, gameTime) * YAW_PER_TICK_SCALE
@@ -92,9 +93,10 @@ public class Wheel implements ClientModInitializer {
             float steerScale = usesDriftDirection ? DRIFT_STEER_SCALE : GRIP_STEER_SCALE;
 
             targetSteerAngle = Mth.clamp(steerInput * steerScale * STEER_WEIGHT, -MAX_STEER_DEG, MAX_STEER_DEG);
+            targetGripSteerAngle = Mth.clamp(steerInput * GRIP_STEER_SCALE * STEER_WEIGHT, -MAX_STEER_DEG, MAX_STEER_DEG);
         }
 
-        WheelManager.update(kart.getUUID(), speedMetersPerSecond, targetSteerAngle);
+        WheelManager.update(kart.getUUID(), speedMetersPerSecond, targetSteerAngle, targetGripSteerAngle);
     }
 
     private static float getSteerSpeed(Player player, long gameTime) {
