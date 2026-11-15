@@ -17,7 +17,6 @@ import java.util.UUID;
 
 public class Wheel implements ClientModInitializer {
     private static final float MAX_STEER_DEG = 35f;
-    private static final float MIN_STEER_SPEED = 0.5f;
 
     // 그립주행과 카운터 스티어 가중치
     private static final float GRIP_STEER_SCALE = -0.75f;
@@ -70,9 +69,8 @@ public class Wheel implements ClientModInitializer {
 
         double kartDeltaX = kart.getX() - kart.xo;
         double kartDeltaZ = kart.getZ() - kart.zo;
-        float positionSpeed = (float) Math.hypot(kartDeltaX, kartDeltaZ) * 20f;
+        float speedMetersPerSecond = (float) Math.hypot(kartDeltaX, kartDeltaZ) * 20f;
 
-        float speedMetersPerSecond = positionSpeed;
         if (player == Main.getCameraPlayer() && RidingCamera.isActionbarSpeedFresh()) {
             speedMetersPerSecond = RidingCamera.actionbarSpeed / 3.6f;
         }
@@ -85,14 +83,12 @@ public class Wheel implements ClientModInitializer {
         if (wheelSteer > 0) {
             float steerInput = usesAngularVelocity
                 ? getSteerSpeed(player, gameTime) * YAW_PER_TICK_SCALE
-                : getDriftAngle(kart, kartDeltaX, kartDeltaZ);
+                : getDriftAngle(kart);
 
-            if (usesAngularVelocity || positionSpeed > MIN_STEER_SPEED) {
-                boolean usesDriftDirection = isCounterSteer && Main.getS2CValue(player, "state-drift") == 1;
-                float steerScale = usesDriftDirection ? DRIFT_STEER_SCALE : GRIP_STEER_SCALE;
+            boolean usesDriftDirection = isCounterSteer && Main.getS2CValue(player, "state-drift") == 1;
+            float steerScale = usesDriftDirection ? DRIFT_STEER_SCALE : GRIP_STEER_SCALE;
 
-                targetSteerAngle = Mth.clamp(steerInput * steerScale * STEER_WEIGHT, -MAX_STEER_DEG, MAX_STEER_DEG);
-            }
+            targetSteerAngle = Mth.clamp(steerInput * steerScale * STEER_WEIGHT, -MAX_STEER_DEG, MAX_STEER_DEG);
         }
 
         WheelManager.update(kart.getUUID(), speedMetersPerSecond, targetSteerAngle);
@@ -103,14 +99,19 @@ public class Wheel implements ClientModInitializer {
         return prevPlayerYaw == null ? 0f : Mth.wrapDegrees(player.getYRot() - prevPlayerYaw.yaw());
     }
 
-    private static float getDriftAngle(Entity kart, double kartDeltaX, double kartDeltaZ) {
-        float movementYaw = (float) Math.toDegrees(Math.atan2(-kartDeltaX, kartDeltaZ));
+    private static float getDriftAngle(Entity kart) {
+        float movementYaw = 0f;
+        float lookYaw = 0f;
 
         for (var passenger : kart.getPassengers()) {
-            if (!Main.hasCertainName(passenger, "formationk-datacarrier")) continue;
-
-            return Mth.wrapDegrees(movementYaw - passenger.getYRot());
+            if (Main.hasCertainName(passenger, "formationk-direction")) {
+                movementYaw = passenger.getYRot();
+            }
+            else if (Main.hasCertainName(passenger, "formationk-datacarrier")) {
+                lookYaw = passenger.getYRot();
+            }
         }
-        return 0f;
+
+        return Mth.wrapDegrees(movementYaw - lookYaw);
     }
 }

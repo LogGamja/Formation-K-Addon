@@ -116,7 +116,7 @@ public class RidingCamera implements ClientModInitializer {
             float dx = (float) (cur.x - lastPos.x);
             float dy = (float) (cur.y - lastPos.y);
             float dz = (float) (cur.z - lastPos.z);
-            float distPerTick = (float) Math.sqrt(dx*dx + dy*dy + dz*dz);
+            float distPerTick = (float) Math.hypot(Math.hypot(dx, dy), dz);
 
             float tickInterval = Main.getSecondsPerTick();
             if (tickInterval > 0f) {

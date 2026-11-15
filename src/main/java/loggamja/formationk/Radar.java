@@ -110,7 +110,7 @@ public class Radar implements ClientModInitializer {
         final double dx = q.x - p.x;
         final double dz = q.z - p.z;
 
-        final double dist = Math.sqrt(dx * dx + dz * dz);
+        final double dist = Math.hypot(dx, dz);
         if (!(3 < dist && dist < (maxDist + 3))) return;
 
         final double dotProduct = dx * fx + dz * fz;
