@@ -25,6 +25,8 @@ public class WheelMeasurer {
     public float radius;
 
     private final Vector3f scratchPosition = new Vector3f();
+    private final Vector3f boundsMin = new Vector3f();
+    private final Vector3f boundsMax = new Vector3f();
     private double weightedSumX, weightedSumY, weightedSumZ, totalVolume;
 
     public void beginCenter() {
@@ -32,23 +34,36 @@ public class WheelMeasurer {
     }
 
     public void addToCenter(float[] modelPoints, Matrix4f displayTransform) {
-        if (modelPoints.length == 0) return;
+        if (!computeBounds(modelPoints, displayTransform)) return;
 
-        float minX = Float.MAX_VALUE, minY = Float.MAX_VALUE, minZ = Float.MAX_VALUE;
-        float maxX = -Float.MAX_VALUE, maxY = -Float.MAX_VALUE, maxZ = -Float.MAX_VALUE;
+        double volume = Math.max(boundsMax.x - boundsMin.x, MIN_EXTENT) * Math.max(boundsMax.y - boundsMin.y, MIN_EXTENT) * Math.max(boundsMax.z - boundsMin.z, MIN_EXTENT);
+        weightedSumX += volume * (boundsMin.x + boundsMax.x) / 2;
+        weightedSumY += volume * (boundsMin.y + boundsMax.y) / 2;
+        weightedSumZ += volume * (boundsMin.z + boundsMax.z) / 2;
+        totalVolume += volume;
+    }
+
+    // 파츠 하나의 중심. 점이 없으면 false
+    public boolean centerOf(float[] modelPoints, Matrix4f displayTransform, Vector3f centerOut) {
+        if (!computeBounds(modelPoints, displayTransform)) return false;
+
+        boundsMin.add(boundsMax, centerOut).mul(0.5f);
+        return true;
+    }
+
+    private boolean computeBounds(float[] modelPoints, Matrix4f displayTransform) {
+        if (modelPoints.length == 0) return false;
+
+        boundsMin.set(Float.MAX_VALUE);
+        boundsMax.set(-Float.MAX_VALUE);
 
         for (int i = 0; i < modelPoints.length; i += 3) {
             displayTransform.transformPosition(modelPoints[i], modelPoints[i + 1], modelPoints[i + 2], scratchPosition);
-            minX = Math.min(minX, scratchPosition.x); maxX = Math.max(maxX, scratchPosition.x);
-            minY = Math.min(minY, scratchPosition.y); maxY = Math.max(maxY, scratchPosition.y);
-            minZ = Math.min(minZ, scratchPosition.z); maxZ = Math.max(maxZ, scratchPosition.z);
+            boundsMin.min(scratchPosition);
+            boundsMax.max(scratchPosition);
         }
 
-        double volume = Math.max(maxX - minX, MIN_EXTENT) * Math.max(maxY - minY, MIN_EXTENT) * Math.max(maxZ - minZ, MIN_EXTENT);
-        weightedSumX += volume * (minX + maxX) / 2;
-        weightedSumY += volume * (minY + maxY) / 2;
-        weightedSumZ += volume * (minZ + maxZ) / 2;
-        totalVolume += volume;
+        return true;
     }
 
     public boolean endCenter() {

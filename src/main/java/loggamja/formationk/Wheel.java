@@ -1,6 +1,7 @@
 package loggamja.formationk;
 
 import loggamja.formationk.helper.WheelManager;
+import loggamja.formationk.helper.WheelPivotEntityReader;
 import loggamja.formationk.option.Config;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -50,6 +51,8 @@ public class Wheel implements ClientModInitializer {
 
         var world = Objects.requireNonNull(Minecraft.getInstance().level);
         long gameTime = world.getGameTime();
+
+        WheelPivotEntityReader.scan(world.entitiesForRendering(), gameTime);
 
         int ridingKartCount = 0;
         for (Player player : world.players()) {
