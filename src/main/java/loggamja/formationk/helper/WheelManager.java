@@ -19,19 +19,22 @@ import java.util.UUID;
 public class WheelManager {
     private static final String WHEEL_NAME = "formationk-wheel-";
     private static final String WHEEL_STEER_NAME = "formationk-wheel-steer-";
+    private static final String STEER_NAME = "formationk-steer-";
 
     private static final int POINTS_REFRESH_TICKS = 40;
     private static final int PIVOT_REFRESH_TICKS = 5;
     private static final int CACHE_KEEP_TICKS = 200;
 
     public record WheelKey(UUID kartId, int wheelId) {}
-    public record WheelPartInfo(WheelKey wheelKey, boolean canSteer, UUID partId, BlockState blockState) {}
+    public record WheelPartInfo(WheelKey wheelKey, boolean canRoll, boolean canSteer, UUID partId, BlockState blockState) {}
 
     private record WheelMotion(float rotateDist, float prevRotateDist, float steerAngle, float prevSteerAngle, long updatedTick) {}
-    private record WheelPivot(Vector3f center, float radius, long measuredTick) {}
+
+    private record WheelPivot(Vector3f steerCenter, Vector3f rollCenter, float radius, long measuredTick) {}
 
     private static final class WheelPart {
         WheelKey wheelKey;
+        boolean canRoll;
         float[] modelPoints = new float[0];
         long pointsCollectedTick = -POINTS_REFRESH_TICKS;
         long lastRenderedTick;
@@ -49,16 +52,31 @@ public class WheelManager {
     public static WheelPartInfo getWheelPartInfo(Display entity) {
         if ((Config.INSTANCE.wheelRoll == 0 && Config.INSTANCE.wheelSteer == 0) || !entity.hasCustomName()) return null;
 
+        // 조향 축 측정을 위해 옵션과 관계없이 모든 파츠를 등록
         String entityName = entity.getCustomName().getString();
-        boolean isSteerPart = entityName.startsWith(WHEEL_STEER_NAME);
-        if (!isSteerPart && !entityName.startsWith(WHEEL_NAME)) return null;
-
-        boolean canSteer = isSteerPart && Config.INSTANCE.wheelSteer > 0;
-        if (Config.INSTANCE.wheelRoll == 0 && !canSteer) return null;
+        String prefix;
+        boolean canRoll;
+        boolean canSteer;
+        if (entityName.startsWith(WHEEL_STEER_NAME)) {
+            prefix = WHEEL_STEER_NAME;
+            canRoll = true;
+            canSteer = true;
+        }
+        else if (entityName.startsWith(WHEEL_NAME)) {
+            prefix = WHEEL_NAME;
+            canRoll = true;
+            canSteer = false;
+        }
+        else if (entityName.startsWith(STEER_NAME)) {
+            prefix = STEER_NAME;
+            canRoll = false;
+            canSteer = true;
+        }
+        else return null;
 
         int wheelId;
         try {
-            wheelId = Integer.parseInt(entityName.substring((isSteerPart ? WHEEL_STEER_NAME : WHEEL_NAME).length()));
+            wheelId = Integer.parseInt(entityName.substring(prefix.length()));
         }
         catch (NumberFormatException e) {
             return null;
@@ -68,7 +86,7 @@ public class WheelManager {
 
         BlockState blockState = entity instanceof Display.BlockDisplay blockDisplay && blockDisplay.blockRenderState() != null ? blockDisplay.blockRenderState().blockState() : null;
 
-        return new WheelPartInfo(wheelKey, canSteer, entity.getUUID(), blockState);
+        return new WheelPartInfo(wheelKey, canRoll, canSteer, entity.getUUID(), blockState);
     }
 
     public static void update(UUID kartId, float speedMetersPerSecond, float targetSteerAngle) {
@@ -107,6 +125,7 @@ public class WheelManager {
 
         var wheelPart = wheelParts.computeIfAbsent(partInfo.partId(), k -> new WheelPart());
         wheelPart.wheelKey = partInfo.wheelKey();
+        wheelPart.canRoll = partInfo.canRoll();
         wheelPart.lastRenderedTick = now();
         wheelPart.displayTransform.set(displayTransform);
 
@@ -124,19 +143,31 @@ public class WheelManager {
 
         float partialTick = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
         float rollAngle = 0f;
-        if (Config.INSTANCE.wheelRoll == 1) {
+        if (partInfo.canRoll() && Config.INSTANCE.wheelRoll == 1 && wheelPivot.rollCenter() != null) {
             rollAngle = Mth.lerp(partialTick, wheelMotion.prevRotateDist(), wheelMotion.rotateDist()) / Math.max(wheelPivot.radius(), 0.05f);
             rollAngle %= Mth.TWO_PI;
         }
 
-        float steerAngle = partInfo.canSteer() ? Mth.lerp(partialTick, wheelMotion.prevSteerAngle(), wheelMotion.steerAngle()) : 0f;
+        float steerAngle = 0f;
+        if (partInfo.canSteer() && Config.INSTANCE.wheelSteer > 0) {
+            steerAngle = Mth.lerp(partialTick, wheelMotion.prevSteerAngle(), wheelMotion.steerAngle());
+        }
         if (rollAngle == 0f && steerAngle == 0f) return;
 
-        scratchWheelRotation.identity()
-                .translate(wheelPivot.center())
+        // 구르기 계산 후 조향 계산
+        scratchWheelRotation.identity();
+        if (steerAngle != 0f) {
+            scratchWheelRotation
+                .translate(wheelPivot.steerCenter())
                 .rotateY((float) Math.toRadians(-steerAngle))
+                .translate(wheelPivot.steerCenter().negate(scratchNegatedCenter));
+        }
+        if (rollAngle != 0f) {
+            scratchWheelRotation
+                .translate(wheelPivot.rollCenter())
                 .rotateX(rollAngle)
-                .translate(wheelPivot.center().negate(scratchNegatedCenter));
+                .translate(wheelPivot.rollCenter().negate(scratchNegatedCenter));
+        }
 
         // 호출 쪽이 역행렬(M) 과 M 을 이미 감싸고 있다
         matrices.mulPose(scratchWheelRotation);
@@ -145,17 +176,28 @@ public class WheelManager {
     private static WheelPivot measure(WheelKey wheelKey) {
         // 반드시 이 순서대로 불러야 함
 
+        // 조향 중심은 세트 전체
         wheelMeasurer.beginCenter();
         for (var wheelPart : wheelParts.values()) {
             if (wheelKey.equals(wheelPart.wheelKey)) wheelMeasurer.addToCenter(wheelPart.modelPoints, wheelPart.displayTransform);
         }
 
         if (!wheelMeasurer.endCenter()) return null;
+        var steerCenter = new Vector3f(wheelMeasurer.center);
 
+        // 구르기 중심과 반지름은 구르는 파츠만
+        wheelMeasurer.beginCenter();
         for (var wheelPart : wheelParts.values()) {
-            if (wheelKey.equals(wheelPart.wheelKey)) wheelMeasurer.addToRadius(wheelPart.modelPoints, wheelPart.displayTransform);
+            if (wheelKey.equals(wheelPart.wheelKey) && wheelPart.canRoll) wheelMeasurer.addToCenter(wheelPart.modelPoints, wheelPart.displayTransform);
         }
 
-        return new WheelPivot(new Vector3f(wheelMeasurer.center), wheelMeasurer.radius, now());
+        if (!wheelMeasurer.endCenter()) return new WheelPivot(steerCenter, null, 0f, now());
+        var rollCenter = new Vector3f(wheelMeasurer.center);
+
+        for (var wheelPart : wheelParts.values()) {
+            if (wheelKey.equals(wheelPart.wheelKey) && wheelPart.canRoll) wheelMeasurer.addToRadius(wheelPart.modelPoints, wheelPart.displayTransform);
+        }
+
+        return new WheelPivot(steerCenter, rollCenter, wheelMeasurer.radius, now());
     }
 }
