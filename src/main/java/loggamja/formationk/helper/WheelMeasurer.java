@@ -41,6 +41,7 @@ public class WheelMeasurer {
 
         computeBounds(modelPoints, displayTransform);
         double volume = Math.max(modelVolume * Math.abs(displayTransform.determinant()), MIN_VOLUME);
+
         weightedSumX += volume * (boundsMin.x + boundsMax.x) / 2;
         weightedSumY += volume * (boundsMin.y + boundsMax.y) / 2;
         weightedSumZ += volume * (boundsMin.z + boundsMax.z) / 2;

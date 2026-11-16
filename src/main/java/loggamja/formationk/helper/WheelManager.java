@@ -1,6 +1,7 @@
 package loggamja.formationk.helper;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import loggamja.formationk.helper.WheelNameParser.WheelName;
 import loggamja.formationk.option.Config;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.state.DisplayEntityRenderState;
@@ -22,16 +23,16 @@ public class WheelManager {
     static final int CACHE_KEEP_TICKS = 200;
 
     public record WheelKey(UUID kartId, int wheelId) {}
-    public record WheelPartInfo(WheelKey wheelKey, boolean canRoll, boolean canSteer, Vector3f wheelAxis, Vector3f steerAxis, boolean noCounter, UUID partId, BlockState blockState) {}
+    public record WheelPartInfo(WheelKey wheelKey, WheelName wheelName, UUID partId, BlockState blockState) {}
 
-    private record WheelMotion(float rotateDist, float prevRotateDist, float steerAngle, float prevSteerAngle, float gripSteerAngle, float prevGripSteerAngle, long updatedTick) {}
+    // 굴러간 거리는 계속 커지므로 float 이면 오래 탈수록 각도가 끊긴다
+    private record WheelMotion(double rotateDist, double prevRotateDist, float steerAngle, float prevSteerAngle, float gripSteerAngle, float prevGripSteerAngle, long updatedTick) {}
 
     private record WheelPivot(Vector3f steerCenter, Vector3f rollCenter, float radius, long measuredTick) {}
 
     private static final class WheelPart {
         WheelKey wheelKey;
-        boolean canRoll;
-        Vector3f wheelAxis;
+        WheelName wheelName;
         float[] modelPoints = new float[0];
         long pointsCollectedTick = -POINTS_REFRESH_TICKS;
         BlockState pointsBlockState;
@@ -56,7 +57,7 @@ public class WheelManager {
 
         var wheelKey = new WheelKey(entity.getRootVehicle().getUUID(), wheelName.wheelId());
 
-        return new WheelPartInfo(wheelKey, wheelName.canRoll(), wheelName.canSteer(), wheelName.wheelAxis(), wheelName.steerAxis(), wheelName.noCounter(), entity.getUUID(), getBlockState(entity));
+        return new WheelPartInfo(wheelKey, wheelName, entity.getUUID(), getBlockState(entity));
     }
 
     static BlockState getBlockState(Display entity) {
@@ -68,7 +69,7 @@ public class WheelManager {
         var prevWheelMotion = wheelMotions.get(kartId);
         if (prevWheelMotion == null) prevWheelMotion = new WheelMotion(0f, 0f, 0f, 0f, 0f, 0f, 0L);
 
-        float rotateDist = prevWheelMotion.rotateDist() + speedMetersPerSecond / 20f;
+        double rotateDist = prevWheelMotion.rotateDist() + speedMetersPerSecond / 20.0;
         float steerAngle = prevWheelMotion.steerAngle() + (targetSteerAngle - prevWheelMotion.steerAngle()) * 0.5f;
         float gripSteerAngle = prevWheelMotion.gripSteerAngle() + (targetGripSteerAngle - prevWheelMotion.gripSteerAngle()) * 0.5f;
 
@@ -97,14 +98,14 @@ public class WheelManager {
     }
 
     public static void apply(DisplayEntityRenderState renderState, WheelPartInfo partInfo, PoseStack matrices, Matrix4f displayTransform) {
+        var wheelName = partInfo.wheelName();
         var wheelMotion = wheelMotions.get(partInfo.wheelKey().kartId());
         if (wheelMotion == null) return;
         if (Math.abs(displayTransform.determinant()) < Float.MIN_NORMAL) return;
 
         var wheelPart = wheelParts.computeIfAbsent(partInfo.partId(), partId -> new WheelPart());
         wheelPart.wheelKey = partInfo.wheelKey();
-        wheelPart.canRoll = partInfo.canRoll();
-        wheelPart.wheelAxis = partInfo.wheelAxis();
+        wheelPart.wheelName = wheelName;
         wheelPart.lastRenderedTick = now();
         wheelPart.displayTransform.set(displayTransform);
 
@@ -123,14 +124,14 @@ public class WheelManager {
 
         float partialTick = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
         float rollAngle = 0f;
-        if (partInfo.canRoll() && Config.INSTANCE.wheelRoll == 1 && wheelPivot.rollCenter() != null) {
-            rollAngle = Mth.lerp(partialTick, wheelMotion.prevRotateDist(), wheelMotion.rotateDist()) / Math.max(wheelPivot.radius(), 0.05f);
-            rollAngle %= Mth.TWO_PI;
+        if (wheelName.canRoll() && Config.INSTANCE.wheelRoll == 1 && wheelPivot.rollCenter() != null) {
+            double rotateDist = Mth.lerp(partialTick, wheelMotion.prevRotateDist(), wheelMotion.rotateDist());
+            rollAngle = (float) (rotateDist / Math.max(wheelPivot.radius(), 0.05f) * wheelName.rollRatio() % Mth.TWO_PI);
         }
 
         float steerAngle = 0f;
-        if (partInfo.canSteer() && Config.INSTANCE.wheelSteer > 0) {
-            steerAngle = partInfo.noCounter()
+        if (wheelName.canSteer() && Config.INSTANCE.wheelSteer > 0) {
+            steerAngle = wheelName.noCounter()
                 ? Mth.lerp(partialTick, wheelMotion.prevGripSteerAngle(), wheelMotion.gripSteerAngle())
                 : Mth.lerp(partialTick, wheelMotion.prevSteerAngle(), wheelMotion.steerAngle());
         }
@@ -141,13 +142,13 @@ public class WheelManager {
         if (steerAngle != 0f) {
             scratchWheelRotation
                 .translate(wheelPivot.steerCenter())
-                .rotate((float) Math.toRadians(steerAngle), partInfo.steerAxis())
+                .rotate((float) Math.toRadians(steerAngle), wheelName.steerAxis())
                 .translate(wheelPivot.steerCenter().negate(scratchNegatedCenter));
         }
         if (rollAngle != 0f) {
             scratchWheelRotation
                 .translate(wheelPivot.rollCenter())
-                .rotate(rollAngle, partInfo.wheelAxis())
+                .rotate(rollAngle, wheelName.wheelAxis())
                 .translate(wheelPivot.rollCenter().negate(scratchNegatedCenter));
         }
 
@@ -174,7 +175,7 @@ public class WheelManager {
         // 구르기 중심과 반지름은 구르는 파츠만
         wheelMeasurer.beginCenter();
         for (var wheelPart : wheelParts.values()) {
-            if (wheelKey.equals(wheelPart.wheelKey) && wheelPart.canRoll) wheelMeasurer.addToCenter(wheelPart.modelPoints, wheelPart.displayTransform);
+            if (wheelKey.equals(wheelPart.wheelKey) && wheelPart.wheelName.canRoll()) wheelMeasurer.addToCenter(wheelPart.modelPoints, wheelPart.displayTransform);
         }
 
         if (!wheelMeasurer.endCenter()) return new WheelPivot(steerCenter, null, 0f, now());
@@ -188,7 +189,7 @@ public class WheelManager {
         }
 
         for (var wheelPart : wheelParts.values()) {
-            if (wheelKey.equals(wheelPart.wheelKey) && wheelPart.canRoll) wheelMeasurer.addToRadius(wheelPart.modelPoints, wheelPart.displayTransform, wheelPart.wheelAxis);
+            if (wheelKey.equals(wheelPart.wheelKey) && wheelPart.wheelName.canRoll()) wheelMeasurer.addToRadius(wheelPart.modelPoints, wheelPart.displayTransform, wheelPart.wheelName.wheelAxis());
         }
 
         return new WheelPivot(steerCenter, rollCenter, wheelMeasurer.radius, now());
