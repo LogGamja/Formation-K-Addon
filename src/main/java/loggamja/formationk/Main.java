@@ -140,6 +140,8 @@ public class Main implements ClientModInitializer {
             isCameraPlayerRidingKart = isRidingNow;
 
             RidingCamera.lastPos = null;
+            RidingCamera.realSpeed = 0f;
+            RidingCamera.timeAfterLastActionbar = RidingCamera.ACTIONBAR_FRESH_TICKS + 1;
             hasDirectionYawSamples = false;
             Minimap.clearAllMap();
             Overtake.resetGauge();

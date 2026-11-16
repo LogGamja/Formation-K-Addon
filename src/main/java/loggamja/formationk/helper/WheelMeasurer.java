@@ -20,6 +20,8 @@ import java.util.List;
 
 public class WheelMeasurer {
     private static final double MIN_EXTENT = 1e-3;
+    private static final double MIN_VOLUME = 1e-12;
+    private static final Matrix4f IDENTITY = new Matrix4f();
 
     public final Vector3f center = new Vector3f();
     public float radius;
@@ -34,9 +36,11 @@ public class WheelMeasurer {
     }
 
     public void addToCenter(float[] modelPoints, Matrix4f displayTransform) {
-        if (!computeBounds(modelPoints, displayTransform)) return;
+        if (!computeBounds(modelPoints, IDENTITY)) return;
+        double modelVolume = Math.max(boundsMax.x - boundsMin.x, MIN_EXTENT) * Math.max(boundsMax.y - boundsMin.y, MIN_EXTENT) * Math.max(boundsMax.z - boundsMin.z, MIN_EXTENT);
 
-        double volume = Math.max(boundsMax.x - boundsMin.x, MIN_EXTENT) * Math.max(boundsMax.y - boundsMin.y, MIN_EXTENT) * Math.max(boundsMax.z - boundsMin.z, MIN_EXTENT);
+        computeBounds(modelPoints, displayTransform);
+        double volume = Math.max(modelVolume * Math.abs(displayTransform.determinant()), MIN_VOLUME);
         weightedSumX += volume * (boundsMin.x + boundsMax.x) / 2;
         weightedSumY += volume * (boundsMin.y + boundsMax.y) / 2;
         weightedSumZ += volume * (boundsMin.z + boundsMax.z) / 2;
