@@ -20,8 +20,8 @@ public class Suspension implements ClientModInitializer {
     public static float pivotYOffset = 0.1f;
 
     private static final double DT  = 0.05;
-    private static final double FREQ  = 1.66; // 공진주파수 (Hz)
-    private static final double Q     = 1;    // 공진 팩터
+    private static final double FREQ  = 1.68; // 공진주파수 (Hz)
+    private static final double Q     = 0.975; // 공진 팩터
 
     private static final class SuspensionState {
         final SpringSimulator.SpringState spring = new SpringSimulator.SpringState();
