@@ -19,6 +19,9 @@ import java.util.UUID;
 public class Wheel implements ClientModInitializer {
     private static final float MAX_STEER_DEG = 35f;
 
+    // ALPHA유닛은 바퀴가 구르기만 하고 조향하지 않는다
+    private static final int ALPHA_ENGINE = 3;
+
     // 그립주행과 카운터 스티어 가중치
     private static final float GRIP_STEER_SCALE = -0.75f;
     private static final float DRIFT_STEER_SCALE = 0.5f;
@@ -84,7 +87,7 @@ public class Wheel implements ClientModInitializer {
 
         float targetSteerAngle = 0f;
         float targetGripSteerAngle = 0f;
-        if (wheelSteer > 0) {
+        if (wheelSteer > 0 && Main.getS2CValue(player, "data-engine-real") != ALPHA_ENGINE) {
             float steerInput = usesAngularVelocity
                 ? getSteerSpeed(player, gameTime) * YAW_PER_TICK_SCALE
                 : getDriftAngle(kart);
