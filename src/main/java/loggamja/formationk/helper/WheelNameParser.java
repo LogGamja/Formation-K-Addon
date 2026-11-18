@@ -26,7 +26,7 @@ public class WheelNameParser {
         return entity.hasCustomName() ? of(entity.getCustomName().getString()) : null;
     }
 
-    public static WheelName of(String name) {
+    private static WheelName of(String name) {
         if (!name.startsWith(PREFIX)) return null;
 
         if (!cache.containsKey(name)) cache.put(name, parse(name));
@@ -129,14 +129,6 @@ public class WheelNameParser {
         return parts;
     }
 
-    private static boolean isOpen(char c) {
-        return c == '[' || c == '(';
-    }
-
-    private static boolean isClose(char c) {
-        return c == ']' || c == ')';
-    }
-
     // 값이 있는 조각이면 여는 괄호 위치, 없으면 -1
     private static int indexOfOpen(String part) {
         for (int i = 0; i < part.length(); i++) {
@@ -144,6 +136,14 @@ public class WheelNameParser {
         }
 
         return -1;
+    }
+
+    private static boolean isOpen(char c) {
+        return c == '[' || c == '(';
+    }
+
+    private static boolean isClose(char c) {
+        return c == ']' || c == ')';
     }
 
     // "0, -1.0f, 0d" 같은 숫자 세 개를 길이 1 인 축으로

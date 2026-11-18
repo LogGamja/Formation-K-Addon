@@ -134,10 +134,9 @@ public class Suspension implements ClientModInitializer {
 
     private static void applyRoll(Player player, List<Entity> passengers, float roll) {
         for (var i : passengers) {
+            // 모델 새들 하나에 공통 roll을 저장
             if (Main.hasCertainName(i, "formationk-modelsaddle")) {
-                for (var j : i.getPassengers()) {
-                    EntityRollManager.setRoll(j.getUUID(), roll, 1);
-                }
+                EntityRollManager.setRoll(i.getUUID(), roll, 1);
             }
         }
         EntityRollManager.setRoll(player.getUUID(), roll, 1);

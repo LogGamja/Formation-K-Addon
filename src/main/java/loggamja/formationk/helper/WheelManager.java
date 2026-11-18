@@ -31,7 +31,6 @@ public class WheelManager {
     private record WheelPivot(Vector3f steerCenter, Vector3f rollCenter, float radius, long measuredTick) {}
 
     private static final class WheelPart {
-        WheelKey wheelKey;
         WheelName wheelName;
         float[] modelPoints = new float[0];
         long pointsCollectedTick = -POINTS_REFRESH_TICKS;
@@ -41,7 +40,9 @@ public class WheelManager {
     }
 
     private static final Map<UUID, WheelMotion> wheelMotions = new HashMap<>();
-    private static final Map<UUID, WheelPart> wheelParts = new HashMap<>();
+
+    // 바퀴별로 묶어 두어 측정할 때 그 바퀴의 파츠만 돈다
+    private static final Map<WheelKey, Map<UUID, WheelPart>> wheelParts = new HashMap<>();
     private static final Map<WheelKey, WheelPivot> wheelPivots = new HashMap<>();
     private static final WheelMeasurer wheelMeasurer = new WheelMeasurer();
 
@@ -64,7 +65,6 @@ public class WheelManager {
         return entity instanceof Display.BlockDisplay blockDisplay && blockDisplay.blockRenderState() != null ? blockDisplay.blockRenderState().blockState() : null;
     }
 
-    // 그립 각도는 카운터 스티어를 끈 파츠가 쓴다
     public static void update(UUID kartId, float speedMetersPerSecond, float targetSteerAngle, float targetGripSteerAngle) {
         var prevWheelMotion = wheelMotions.get(kartId);
         if (prevWheelMotion == null) prevWheelMotion = new WheelMotion(0f, 0f, 0f, 0f, 0f, 0f, 0L);
@@ -83,11 +83,10 @@ public class WheelManager {
 
         WheelPivotEntityReader.endTick(now());
         wheelPivots.entrySet().removeIf(pivotEntry -> now() - pivotEntry.getValue().measuredTick() > CACHE_KEEP_TICKS);
-        wheelParts.entrySet().removeIf(partEntry -> now() - partEntry.getValue().lastRenderedTick > CACHE_KEEP_TICKS);
-    }
-
-    private static long now() {
-        return Minecraft.getInstance().level.getGameTime();
+        wheelParts.values().removeIf(keyParts -> {
+            keyParts.values().removeIf(wheelPart -> now() - wheelPart.lastRenderedTick > CACHE_KEEP_TICKS);
+            return keyParts.isEmpty();
+        });
     }
 
     public static void clear() {
@@ -103,38 +102,14 @@ public class WheelManager {
         if (wheelMotion == null) return;
         if (Math.abs(displayTransform.determinant()) < Float.MIN_NORMAL) return;
 
-        var wheelPart = wheelParts.computeIfAbsent(partInfo.partId(), partId -> new WheelPart());
-        wheelPart.wheelKey = partInfo.wheelKey();
-        wheelPart.wheelName = wheelName;
-        wheelPart.lastRenderedTick = now();
-        wheelPart.displayTransform.set(displayTransform);
+        registerPart(renderState, partInfo, displayTransform);
 
-        if (now() - wheelPart.pointsCollectedTick >= POINTS_REFRESH_TICKS || partInfo.blockState() != wheelPart.pointsBlockState) {
-            wheelPart.modelPoints = WheelMeasurer.collectPoints(renderState, partInfo.blockState());
-            wheelPart.pointsCollectedTick = now();
-            wheelPart.pointsBlockState = partInfo.blockState();
-        }
-
-        var wheelPivot = wheelPivots.get(partInfo.wheelKey());
-        if (wheelPivot == null || now() - wheelPivot.measuredTick() >= PIVOT_REFRESH_TICKS) {
-            wheelPivot = measure(partInfo.wheelKey());
-            if (wheelPivot == null) return;
-            wheelPivots.put(partInfo.wheelKey(), wheelPivot);
-        }
+        var wheelPivot = getWheelPivot(partInfo.wheelKey());
+        if (wheelPivot == null) return;
 
         float partialTick = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
-        float rollAngle = 0f;
-        if (wheelName.canRoll() && Config.INSTANCE.wheelRoll == 1 && wheelPivot.rollCenter() != null) {
-            double rotateDist = Mth.lerp(partialTick, wheelMotion.prevRotateDist(), wheelMotion.rotateDist());
-            rollAngle = (float) (rotateDist / Math.max(wheelPivot.radius(), 0.05f) * wheelName.rollRatio() % Mth.TWO_PI);
-        }
-
-        float steerAngle = 0f;
-        if (wheelName.canSteer() && Config.INSTANCE.wheelSteer > 0) {
-            steerAngle = wheelName.noCounter()
-                ? Mth.lerp(partialTick, wheelMotion.prevGripSteerAngle(), wheelMotion.gripSteerAngle())
-                : Mth.lerp(partialTick, wheelMotion.prevSteerAngle(), wheelMotion.steerAngle());
-        }
+        float rollAngle = getRollAngle(wheelName, wheelMotion, wheelPivot, partialTick);
+        float steerAngle = getSteerAngle(wheelName, wheelMotion, partialTick);
         if (rollAngle == 0f && steerAngle == 0f) return;
 
         // 구르기 계산 후 조향 계산
@@ -156,13 +131,38 @@ public class WheelManager {
         matrices.mulPose(scratchWheelRotation);
     }
 
+    // 측정에 쓸 파츠의 이름, 변환, 모델 점을 갱신
+    private static void registerPart(DisplayEntityRenderState renderState, WheelPartInfo partInfo, Matrix4f displayTransform) {
+        var wheelPart = wheelParts.computeIfAbsent(partInfo.wheelKey(), wheelKey -> new HashMap<>()).computeIfAbsent(partInfo.partId(), partId -> new WheelPart());
+        wheelPart.wheelName = partInfo.wheelName();
+        wheelPart.lastRenderedTick = now();
+        wheelPart.displayTransform.set(displayTransform);
+
+        if (now() - wheelPart.pointsCollectedTick >= POINTS_REFRESH_TICKS || partInfo.blockState() != wheelPart.pointsBlockState) {
+            wheelPart.modelPoints = WheelMeasurer.collectPoints(renderState, partInfo.blockState());
+            wheelPart.pointsCollectedTick = now();
+            wheelPart.pointsBlockState = partInfo.blockState();
+        }
+    }
+
+    private static WheelPivot getWheelPivot(WheelKey wheelKey) {
+        var wheelPivot = wheelPivots.get(wheelKey);
+        if (wheelPivot != null && now() - wheelPivot.measuredTick() < PIVOT_REFRESH_TICKS) return wheelPivot;
+
+        wheelPivot = measure(wheelKey);
+        if (wheelPivot != null) wheelPivots.put(wheelKey, wheelPivot);
+
+        return wheelPivot;
+    }
+
     private static WheelPivot measure(WheelKey wheelKey) {
         // 반드시 이 순서대로 불러야 함
+        var keyParts = wheelParts.get(wheelKey).values();
 
         // 조향 중심은 세트 전체
         wheelMeasurer.beginCenter();
-        for (var wheelPart : wheelParts.values()) {
-            if (wheelKey.equals(wheelPart.wheelKey)) wheelMeasurer.addToCenter(wheelPart.modelPoints, wheelPart.displayTransform);
+        for (var wheelPart : keyParts) {
+            wheelMeasurer.addToCenter(wheelPart.modelPoints, wheelPart.displayTransform);
         }
 
         if (!wheelMeasurer.endCenter()) return null;
@@ -174,8 +174,8 @@ public class WheelManager {
 
         // 구르기 중심과 반지름은 구르는 파츠만
         wheelMeasurer.beginCenter();
-        for (var wheelPart : wheelParts.values()) {
-            if (wheelKey.equals(wheelPart.wheelKey) && wheelPart.wheelName.canRoll()) wheelMeasurer.addToCenter(wheelPart.modelPoints, wheelPart.displayTransform);
+        for (var wheelPart : keyParts) {
+            if (wheelPart.wheelName.canRoll()) wheelMeasurer.addToCenter(wheelPart.modelPoints, wheelPart.displayTransform);
         }
 
         if (!wheelMeasurer.endCenter()) return new WheelPivot(steerCenter, null, 0f, now());
@@ -188,10 +188,29 @@ public class WheelManager {
             wheelMeasurer.center.set(rollCenter);
         }
 
-        for (var wheelPart : wheelParts.values()) {
-            if (wheelKey.equals(wheelPart.wheelKey) && wheelPart.wheelName.canRoll()) wheelMeasurer.addToRadius(wheelPart.modelPoints, wheelPart.displayTransform, wheelPart.wheelName.wheelAxis());
+        for (var wheelPart : keyParts) {
+            if (wheelPart.wheelName.canRoll()) wheelMeasurer.addToRadius(wheelPart.modelPoints, wheelPart.displayTransform, wheelPart.wheelName.wheelAxis());
         }
 
         return new WheelPivot(steerCenter, rollCenter, wheelMeasurer.radius, now());
+    }
+
+    private static float getRollAngle(WheelName wheelName, WheelMotion wheelMotion, WheelPivot wheelPivot, float partialTick) {
+        if (!wheelName.canRoll() || Config.INSTANCE.wheelRoll != 1 || wheelPivot.rollCenter() == null) return 0f;
+
+        double rotateDist = Mth.lerp(partialTick, wheelMotion.prevRotateDist(), wheelMotion.rotateDist());
+        return (float) (rotateDist / Math.max(wheelPivot.radius(), 0.05f) * wheelName.rollRatio() % Mth.TWO_PI);
+    }
+
+    private static float getSteerAngle(WheelName wheelName, WheelMotion wheelMotion, float partialTick) {
+        if (!wheelName.canSteer() || Config.INSTANCE.wheelSteer <= 0) return 0f;
+
+        return wheelName.noCounter()
+            ? Mth.lerp(partialTick, wheelMotion.prevGripSteerAngle(), wheelMotion.gripSteerAngle())
+            : Mth.lerp(partialTick, wheelMotion.prevSteerAngle(), wheelMotion.steerAngle());
+    }
+
+    private static long now() {
+        return Minecraft.getInstance().level != null ? Minecraft.getInstance().level.getGameTime() : 0;
     }
 }

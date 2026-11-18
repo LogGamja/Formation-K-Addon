@@ -17,6 +17,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.network.chat.contents.PlainTextContents;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 
@@ -128,12 +129,13 @@ public class Main implements ClientModInitializer {
         return player.getViewYRot(tickDelta);
     }
     public static boolean hasCertainName(Entity entity, String saddleName) {
-        if (entity != null && entity.getCustomName() != null) {
-            return entity.getCustomName().getString().equals(saddleName);
+        if (entity == null || entity.getCustomName() == null) return false;
+
+        var customName = entity.getCustomName();
+        if (customName.getContents() instanceof PlainTextContents.LiteralContents(String text) && customName.getSiblings().isEmpty()) {
+            return text.equals(saddleName);
         }
-        else {
-            return false;
-        }
+        return customName.getString().equals(saddleName);
     }
     void updateRidingState(boolean isRidingNow) {
         if (isRidingNow != isCameraPlayerRidingKart) {

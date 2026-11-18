@@ -14,7 +14,7 @@ public final class API {
 
     private static volatile boolean menuButtonHidden = false;
 
-    // ESC 메뉴의 설정 버튼을 숨긴다 (래치형 — 해제하기 전까지 계속 숨겨진 상태 유지)
+    // ESC 메뉴의 설정 버튼을 숨김
     public static void setMenuButtonHidden(boolean hidden) {
         menuButtonHidden = hidden;
     }

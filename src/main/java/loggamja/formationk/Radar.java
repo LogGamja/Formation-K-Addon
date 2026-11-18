@@ -50,7 +50,7 @@ public class Radar implements ClientModInitializer {
     }
     private static void collectShadowEntities(Minecraft client) {
         shadowEntities.clear();
-        if (!Main.isPlayingInGame()) return;
+        if (!Main.isCameraPlayerRidingKart || !Main.isPlayingInGame()) return;
         if (Config.INSTANCE.RadarOption != 1 && Config.INSTANCE.useMinimap == 0) return;
 
         for (Entity entity : client.level.entitiesForRendering()) {

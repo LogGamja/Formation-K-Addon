@@ -1,6 +1,7 @@
 
 package loggamja.formationk.mixin;
 
+import loggamja.formationk.Main;
 import loggamja.formationk.Suspension;
 import loggamja.formationk.helper.EntityRollManager;
 import loggamja.formationk.helper.WheelManager;
@@ -50,10 +51,9 @@ public class DisplayEntityRendererMixin {
         if (state.renderState == null) return;
 
         DisplayEntityRenderStateAccessor acc = (DisplayEntityRenderStateAccessor) state;
-        UUID uuid = acc.formationk$getUuid();
-        if (uuid == null) return;
+        UUID rollKey = acc.formationk$getRollKey();
 
-        float rollDeg = EntityRollManager.getCurrentRoll(uuid);
+        float rollDeg = rollKey == null ? 0f : EntityRollManager.getCurrentRoll(rollKey);
         WheelManager.WheelPartInfo wheel = acc.formationk$getWheel();
         if (rollDeg == 0f && wheel == null) return;
 
@@ -81,15 +81,19 @@ public class DisplayEntityRendererMixin {
             method = "extractRenderState(Lnet/minecraft/world/entity/Display;Lnet/minecraft/client/renderer/entity/state/DisplayEntityRenderState;F)V",
             at = @At("TAIL")
     )
-    private void formationk$captureUuid(Display entity, DisplayEntityRenderState state, float tickDelta, CallbackInfo ci) {
+    private void formationk$captureRollKey(Display entity, DisplayEntityRenderState state, float tickDelta, CallbackInfo ci) {
         DisplayEntityRenderStateAccessor accessor = (DisplayEntityRenderStateAccessor) state;
-        accessor.formationk$setUuid(entity.getUUID());
+
+        // 롤 데이터를 modelSaddle에서 읽어와야 함
+        var vehicle = entity.getVehicle();
+        accessor.formationk$setRollKey(Main.hasCertainName(vehicle, "formationk-modelsaddle") ? vehicle.getUUID() : null);
         accessor.formationk$setWheel(WheelManager.getWheelPartInfo(entity));
 
         if (entity.isPassenger()) {
             double pivotY = entity.getY() - entity.getRootVehicle().getY() - Suspension.pivotYOffset;
             accessor.formationk$setPivotY(pivotY);
-        } else {
+        }
+        else {
             accessor.formationk$setPivotY(0.0);
         }
     }

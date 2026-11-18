@@ -14,16 +14,16 @@ import java.util.UUID;
 @Mixin(DisplayEntityRenderState.class)
 public class DisplayEntityRenderStateMixin implements DisplayEntityRenderStateAccessor {
     @Unique
-    private UUID formationk$uuid;
+    private UUID formationk$rollKey;
 
     @Unique
     private double formationk$pivotY;
 
     @Override
-    public UUID formationk$getUuid() { return formationk$uuid; }
+    public UUID formationk$getRollKey() { return formationk$rollKey; }
 
     @Override
-    public void formationk$setUuid(UUID uuid) { this.formationk$uuid = uuid; }
+    public void formationk$setRollKey(UUID rollKey) { this.formationk$rollKey = rollKey; }
 
     @Override
     public double formationk$getPivotY() { return formationk$pivotY; }

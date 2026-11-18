@@ -5,8 +5,8 @@ import loggamja.formationk.helper.WheelManager;
 import java.util.UUID;
 
 public interface DisplayEntityRenderStateAccessor {
-    UUID formationk$getUuid();
-    void formationk$setUuid(UUID uuid);
+    UUID formationk$getRollKey();
+    void formationk$setRollKey(UUID rollKey);
 
     double formationk$getPivotY();
     void formationk$setPivotY(double pivotY);
